@@ -19,6 +19,8 @@ public class DemoApplication {
 			ChatClient chatClient = builder.build();
 			String response = chatClient.prompt("Tell me a joke").call().content();
 			System.out.println(response);
+			response = chatClient.prompt("What are the first 10 prime numbers?").call().content();
+			System.out.println(response);
 		};
 	}
 }
