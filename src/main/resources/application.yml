@@ -1,0 +1,12 @@
+---
+spring:
+  application:
+    name: demo
+  ai:
+    mistralai:
+      base-url: http://ollama-mistral:11434
+      model: mistral
+      api-key: dummy-key
+    ollama:
+      base-url: http://ollama-mistral:11434
+      model: mistral
