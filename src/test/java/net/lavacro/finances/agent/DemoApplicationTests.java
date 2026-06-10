@@ -1,4 +1,4 @@
-package net.lavacro.spring_ai.demo;
+package net.lavacro.finances.agent;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,10 +1,32 @@
 ---
 spring:
   application:
-    name: demo
+    name: finances-agent
   ai:
     ollama:
       base-url: http://llm:11434
       chat:
 #        model: mistral
         model: qwen2.5:7b
+  kafka:
+    bootstrap-servers: kafka.lavacro.net:9092
+    consumer:
+      group-id: 'finances-agent-CG'
+      auto-offset-reset: latest
+      max-poll-records: 500
+      enable-auto-commit: false
+      client-id: 'finances-agent-consumer'
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      properties:
+        spring.deserializer.key.delegate.class: 'org.apache.kafka.common.serialization.StringDeserializer'
+        spring.deserializer.value.delegate.class: 'net.lavacro.traffic_mon.config.UlogdDeserializer'
+        max.poll.interval.ms: 60000
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 10000
+      fetch-min-size: 4096
+      fetch-max-wait: 100
+    listener:
+      ack-mode: manual
+      concurrency: 2
+      type: batch

@@ -1,4 +1,4 @@
-package net.lavacro.spring_ai.demo;
+package net.lavacro.finances.agent;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.boot.CommandLineRunner;
@@ -7,10 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-public class DemoApplication {
+public class MainApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(MainApplication.class, args);
 	}
 
 	@Bean
