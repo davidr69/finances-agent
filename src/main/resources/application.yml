@@ -4,6 +4,7 @@ spring:
     name: demo
   ai:
     ollama:
-      base-url: http://ollama-mistral:11434
+      base-url: http://llm:11434
       chat:
-        model: mistral
+#        model: mistral
+        model: qwen2.5:7b
