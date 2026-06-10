@@ -23,7 +23,6 @@ ext {
 
 dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
-
 	implementation 'org.springframework.kafka:spring-kafka'
 
 	compileOnly 'org.projectlombok:lombok:1.18.42'
