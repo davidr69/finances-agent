@@ -9,7 +9,7 @@ version = '0.0.1'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(26)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
@@ -23,7 +23,7 @@ ext {
 
 dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
-	implementation 'org.springframework.kafka:spring-kafka'
+	implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
 	compileOnly 'org.projectlombok:lombok:1.18.42'
 	annotationProcessor 'org.projectlombok:lombok:1.18.42'
