@@ -1,19 +1,22 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.workflow.ChatBot;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
 public class MyConsumer {
+	private final ChatBot chatBot;
+
+	public MyConsumer(ChatBot chatBot) {
+		this.chatBot = chatBot;
+	}
 
 	@KafkaListener(topics = "finances-topic")
 	public void listen(ConsumerRecord<String, byte[]> message) {
@@ -28,11 +31,8 @@ public class MyConsumer {
 		log.info("account id: {}", accountId);
 
 		byte[] payload = message.value();
-		File file = new File("/tmp/temp.pdf");
-		try (FileOutputStream fos = new FileOutputStream(file)) {
-			fos.write(payload);
-		} catch (IOException e) {
-			log.error("Error writing file: {}", e.getMessage());
-		}
+
+		log.info("payload size: {}", payload.length);
+		chatBot.test();
 	}
 }

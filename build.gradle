@@ -7,9 +7,14 @@ plugins {
 group = 'net.lavacro.finances-agent'
 version = '0.0.1'
 
+def javaVersion = 25
+if(System.getProperty('os.arch') == 'aarch64') {
+	javaVersion = 26
+}
+
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(javaVersion)
 	}
 }
 
