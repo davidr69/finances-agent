@@ -16,7 +16,9 @@ public class ChatBot {
 	private final ChatClient chatClient;
 
 	public ChatBot(ChatClient.Builder chatClient) {
-		this.chatClient = chatClient.build();
+		this.chatClient = chatClient
+//				.defaultAdvisors(null)
+				.build();
 	}
 
 	public void test(byte[] pdf) {

@@ -1,12 +1,39 @@
 spring:
+  # general properties
   application:
     name: finances-agent
+
+  # datasource stuff (should really remove this and just use envars)
+  datasource:
+    url: jdbc:postgresql://prod-db:5432/llm_memory
+    username: '${DB_LLM_MEMORY_USERNAME:llm_memory_user}'
+    password: '${DB_LLM_MEMORY_PASSWORD:llm_memory_password}'
+
+  # AI properties
   ai:
     ollama:
       base-url: http://llm:11434
       chat:
 #        model: mistral
         model: qwen2.5:7b
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+    mcp:
+      server:
+        protocol: streamable
+      client:
+        streamable-http:
+          connections:
+            scheduler:
+              url: http://scheduler:8081
+
+  # messaging
   kafka:
     bootstrap-servers: kafka.lavacro.net:9092
     consumer:
