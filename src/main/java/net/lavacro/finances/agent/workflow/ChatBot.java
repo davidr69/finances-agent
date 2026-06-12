@@ -6,10 +6,9 @@ import org.springframework.stereotype.Service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.Loader;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
 
 @Service
 @Slf4j
@@ -25,88 +24,24 @@ public class ChatBot {
 			"This particular statement has two accounts, each with an opening balance, transactions, interest, and ending balance.";
 
 		String extracted;
-		try {
-			extracted = extractTextFromPdf(pdf);
-		} catch (IOException e) {
-			log.error("Failed to extract PDF text", e);
+
+		try (
+				PDDocument doc = Loader.loadPDF(pdf)
+		) {
+			PDFTextStripper stripper = new PDFTextStripper();
+			stripper.setSortByPosition(true);
+			extracted = stripper.getText(doc);
+		} catch(IOException e) {
+			log.error("Error parsing PDF: {}", e.getMessage(), e);
 			return;
 		}
 
-		if (extracted == null || extracted.isBlank()) {
-			log.warn("No text extracted from PDF");
-			return;
-		}
+		String response = chatClient.prompt()
+			.system(instruction)
+			.user(extracted)
+			.call()
+			.content();
 
-		// Send the full extracted text to your model (no chunking per user preference)
-		String toSend = "Bank statement text:\n\n" + extracted + "\n\n" + instruction;
-
-		String response = chatClient.prompt(toSend).call().content();
-		log.info(response);
+		log.info("ChatBot response: {}", response);
 	}
-
-	private static String extractTextFromPdf(byte[] pdf) throws IOException {
-		// Use reflection to call PDFBox loader methods so the code works across PDFBox 2.x and 3.x
-		java.io.InputStream is = new ByteArrayInputStream(pdf);
-
-		// Try any Loader.load(...) variant first
-		try {
-			Class<?> loaderClass = Class.forName("org.apache.pdfbox.Loader");
-			for (java.lang.reflect.Method m : loaderClass.getMethods()) {
-				if (!m.getName().equals("load")) continue;
-				Class<?>[] params = m.getParameterTypes();
-				if (params.length != 1) continue;
-				try {
-					Object docObj = null;
-					if (params[0].isAssignableFrom(java.io.InputStream.class)) {
-						docObj = m.invoke(null, new ByteArrayInputStream(pdf));
-					} else if (params[0].isAssignableFrom(byte[].class)) {
-						docObj = m.invoke(null, (Object) pdf);
-					} else {
-						continue;
-					}
-					if (docObj instanceof PDDocument) {
-						log.debug("Loaded PDF using Loader.load overload: {}", m);
-						try (PDDocument d = (PDDocument) docObj) {
-							PDFTextStripper stripper = new PDFTextStripper();
-							return stripper.getText(d);
-						}
-					}
-				} catch (IllegalArgumentException | ReflectiveOperationException e) {
-					// try next overload
-				}
-			}
-		} catch (ClassNotFoundException e) {
-			// ignore - try PDDocument methods next
-		}
-
-		// Try PDDocument.load(...) overloads
-		for (java.lang.reflect.Method method : PDDocument.class.getMethods()) {
-				if (!method.getName().equals("load")) continue;
-				Class<?>[] params = method.getParameterTypes();
-				if (params.length != 1) continue;
-				try {
-					Object docObj = null;
-					if (params[0].isAssignableFrom(java.io.InputStream.class)) {
-						docObj = method.invoke(null, new ByteArrayInputStream(pdf));
-					} else if (params[0].isAssignableFrom(byte[].class)) {
-						docObj = method.invoke(null, (Object) pdf);
-					} else {
-						continue;
-					}
-					if (docObj instanceof PDDocument) {
-						log.debug("Loaded PDF using PDDocument.load overload: {}", method);
-						try (PDDocument d = (PDDocument) docObj) {
-							PDFTextStripper stripper = new PDFTextStripper();
-							return stripper.getText(d);
-						}
-					}
-				} catch (IllegalArgumentException | ReflectiveOperationException e) {
-					// continue trying other overloads
-				}
-			}
-
-		throw new IOException("No suitable PDFBox load method found on the classpath");
-	}
-
-
 }
