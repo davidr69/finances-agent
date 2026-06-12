@@ -7,10 +7,7 @@ plugins {
 group = 'net.lavacro.finances-agent'
 version = '0.0.1'
 
-def javaVersion = 25
-if(System.getProperty('os.arch') == 'aarch64') {
-	javaVersion = 26
-}
+def javaVersion = System.getProperty('os.arch') == 'aarch64' ? 26 : 25
 
 java {
 	toolchain {
@@ -29,6 +26,8 @@ ext {
 dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 	implementation 'org.springframework.boot:spring-boot-starter-kafka'
+	// PDF text extraction
+	implementation 'org.apache.pdfbox:pdfbox:3.0.0'
 
 	compileOnly 'org.projectlombok:lombok:1.18.42'
 	annotationProcessor 'org.projectlombok:lombok:1.18.42'

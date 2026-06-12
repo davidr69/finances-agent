@@ -33,6 +33,6 @@ public class MyConsumer {
 		byte[] payload = message.value();
 
 		log.info("payload size: {}", payload.length);
-		chatBot.test();
+		chatBot.test(payload);
 	}
 }

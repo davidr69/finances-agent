@@ -8,3 +8,6 @@ A separate microservice is required to consume the message and
 communicate with the LLM to parse the statement. The LLM does not
 know what to do with it, so the microservice will act as a
 sub-agent to the LLM.
+
+TODO:
+- [ ] Get the question from the database that is specific to the statement that was uploaded.
