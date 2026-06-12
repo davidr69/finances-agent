@@ -11,3 +11,5 @@ sub-agent to the LLM.
 
 TODO:
 - [ ] Get the question from the database that is specific to the statement that was uploaded.
+- [ ] Need PostGreSQL to store context and questions.
+- [ ] Need a vector database ... Neo4j? Or maybe just PostGreSQL with pgvector extension? 
