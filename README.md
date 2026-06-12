@@ -9,7 +9,11 @@ communicate with the LLM to parse the statement. The LLM does not
 know what to do with it, so the microservice will act as a
 sub-agent to the LLM.
 
+## Conceptual idea
+
+![workflow](images/workflow.png)
+
 TODO:
-- [ ] Get the question from the database that is specific to the statement that was uploaded.
+- [ ] Get the prompt from the database that is specific to the statement that was uploaded.
 - [ ] Need PostGreSQL to store context and questions.
 - [ ] Need a vector database ... Neo4j? Or maybe just PostGreSQL with pgvector extension? 
