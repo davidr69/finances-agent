@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class MyTool {
-	@McpTool(description = "TBD")
-	String noop(@McpToolParam(description = "TBD") String input) {
-		return "noop";
-	}
+//	@McpTool(description = "TBD")
+//	String noop(@McpToolParam(description = "TBD") String input) {
+//		return "noop";
+//	}
 }
