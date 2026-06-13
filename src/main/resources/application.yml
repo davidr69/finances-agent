@@ -15,8 +15,8 @@ spring:
       base-url: http://llm:11434
       chat:
 #        model: mistral
-#        model: qwen2.5:7b
-        model: gemma4
+        model: qwen2.5:7b
+#        model: gemma4
         num-predict: 4096
     #    chat:
 #      memory:

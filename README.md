@@ -44,9 +44,9 @@ integrate all the underlying technology.
 
 ```shell
 % curl -s http://llm:11434/api/tags | jq -r '.models[] | "\(.name)\t\(.capabilities | join(","))"'
-gemma4:latest	completion,tools,thinking
-qwen2.5:7b	completion,tools
-mistral:latest	completion,tools
+gemma4:latest   completion,tools,thinking
+qwen2.5:7b      completion,tools
+mistral:latest  completion,tools
 ```
 
 TODO:
