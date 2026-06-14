@@ -4,10 +4,8 @@ spring:
     name: finances-agent
 
   # datasource stuff (should really remove this and just use envars)
-#  datasource:
-#    url: jdbc:postgresql://prod-db:5432/llm_memory
-#    username: '${DB_LLM_MEMORY_USERNAME:llm_memory_user}'
-#    password: '${DB_LLM_MEMORY_PASSWORD:llm_memory_password}'
+  datasource:
+    url: jdbc:postgresql://prod-db:5432/finances
 
   # AI properties
   ai:
@@ -18,6 +16,8 @@ spring:
         model: qwen2.5:7b
 #        model: gemma4
         num-predict: 4096
+      embedding:
+        model: nomic-embed-text
     #    chat:
 #      memory:
 #        repository:
