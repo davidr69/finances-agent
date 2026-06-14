@@ -28,6 +28,14 @@ were tested:
 - qwen2.5:7b
 - gemma4
 
+```shell
+% curl -s http://llm:11434/api/tags | jq -r '.models[] | "\(.name)\t\(.capabilities | join(","))"'
+nomic-embed-text:latest	embedding
+gemma4:latest   completion,tools,thinking
+qwen2.5:7b      completion,tools
+mistral:latest  completion,tools
+```
+
 Of the three, only gemma4 is multi-modal. This means it can accept more
 than just text as input. Despite gemma4 being multi-modal, internally,
 the PDF must first be rasterized. Commercial LLM's do this implicitly
@@ -42,14 +50,29 @@ parsing and cleanup must be performed, and then clean data can then
 be set as text to the LLM. While far from ideal, it's a great way
 integrate all the underlying technology.
 
+## Requirements
+
 ```shell
-% curl -s http://llm:11434/api/tags | jq -r '.models[] | "\(.name)\t\(.capabilities | join(","))"'
-gemma4:latest   completion,tools,thinking
-qwen2.5:7b      completion,tools
-mistral:latest  completion,tools
+$ apt install postgresql-16-pgvector
+
+% curl -s http://llm:11434/api/embeddings -d '{"model": "nomic-embed-text", "prompt": "test"}' | jq '.embedding | length'
+768
 ```
+
+```sql
+CREATE EXTENSION vector;
+
+ALTER TABLE entities ADD COLUMN embedding vector(768);
+```
+
+Semantic search system
+
+Semantic understanding    ← nomic-embed-text (genuine AI)  
+Similarity reasoning      ← pgvector cosine distance  
+Decision threshold        ← your 0.75 rule  
+Knowledge base            ← your 1,459 vendors
 
 TODO:
 - [ ] Get the prompt from the database that is specific to the statement that was uploaded.
 - [ ] Need PostGreSQL to store context and questions.
-- [ ] Need a vector database ... Neo4j? Or maybe just PostGreSQL with pgvector extension? 
+- [x] Need a vector database ... Neo4j? Or maybe just PostGreSQL with pgvector extension? 

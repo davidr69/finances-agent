@@ -3,6 +3,7 @@ package net.lavacro.finances.agent.workflow;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -15,13 +16,19 @@ import java.io.IOException;
 @Slf4j
 public class ChatBot {
 	private final ChatClient chatClient;
+	private final EmbeddingModel embeddingModel;
 	private final StatementParserFactory parserFactory;
 
-	public ChatBot(ChatClient.Builder chatClient, StatementParserFactory parserFactory) {
+	public ChatBot(
+			ChatClient.Builder chatClient,
+			EmbeddingModel embeddingModel,
+			StatementParserFactory parserFactory
+	) {
 		this.chatClient = chatClient
 //				.defaultAdvisors(null)
 				.build();
 		this.parserFactory = parserFactory;
+		this.embeddingModel = embeddingModel;
 	}
 
 	public void test(byte[] pdf) {
