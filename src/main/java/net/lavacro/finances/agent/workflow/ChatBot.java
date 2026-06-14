@@ -33,22 +33,18 @@ public class ChatBot {
 
 	public void test(byte[] pdf) {
 		String instruction = """
-Parse this bank statement. DO NOT SUMMARIZE ANYTHING ABOUT IT; I DO NOT WANT TO KNOW!!!
-You are to do one and ONLY one thing: list each transaction. If you have any context about this, ignore it.
-				
-IMPORTANT FORMATTING RULES:
-- Some transactions wrap across two lines. A line containing only a number like "9286"\s
-  or "Card 9286" is a continuation of the previous transaction, not a new entry. Ignore it.
-- A new transaction always begins with a date in MM/DD format.
-- Columns are: posted date, transaction type, transaction date, vendor/merchant, amount, balance.
+These are transactions from my bank statement. The first field is the posted date. The last field is the balance, and the field before the last is the transaction amount.
 
-For each transaction extract: transaction date, vendor/merchant, amount.
-				
-Respond ONLY with a JSON array, no explanation, no markdown. Example:
+Sometimes there will be a second date, which is the transaction date, immediately followed by the vendor. In cases where there is no second date, the vendor will be immediately after the first date.
+
+Please identify the vendors in these transactions. DO NOT SUMMARIZE. Provide a list of JSON objects in the following format:
+
 [
-  { "date": "04/16", "vendor": "Sq *Country Donuts R", "amount": -8.32 },
-  { "date": "04/16", "vendor": "Sq *Country Donuts R", "amount": -2.56 }
-]""";
+	{"date":"04/05", "vendor":"Netflix", "amount":"12.34"},
+	{"date":"05/09", "vendor":"Costco", "amount":"12.34"}
+]
+
+""";
 
 		String extracted;
 

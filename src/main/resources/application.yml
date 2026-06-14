@@ -18,7 +18,7 @@ spring:
         num-predict: 4096
       embedding:
         model: nomic-embed-text
-    #    chat:
+#    chat:
 #      memory:
 #        repository:
 #          jdbc:
