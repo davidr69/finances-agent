@@ -29,7 +29,6 @@ dependencies {
 
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
-	implementation 'org.springframework.ai:spring-ai-starter-mcp-server'
 //	implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 	implementation 'org.springframework.ai:spring-ai-vector-store-advisor'
@@ -39,6 +38,7 @@ dependencies {
 	implementation 'org.apache.pdfbox:pdfbox:3.0.7'
 
 	compileOnly 'org.projectlombok:lombok:1.18.42'
+	compileOnly 'org.jetbrains:annotations:24.1.0'
 	annotationProcessor 'org.projectlombok:lombok:1.18.42'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

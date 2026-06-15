@@ -13,8 +13,8 @@ spring:
       base-url: http://llm:11434
       chat:
 #        model: mistral
-        model: qwen2.5:7b
-#        model: gemma4
+#        model: qwen2.5:7b
+        model: gemma4
         num-predict: 4096
       embedding:
         model: nomic-embed-text
@@ -26,15 +26,6 @@ spring:
 #    vectorstore:
 #      pgvector:
 #        initialize-schema: true
-    mcp:
-      server:
-        protocol: streamable
-        expose-mcp-client-tools: true
-#      client:
-#        streamable-http:
-#          connections:
-#            scheduler:
-#              url: http://scheduler:8081
 
   # messaging
   kafka:
@@ -49,3 +40,5 @@ spring:
       fetch-max-wait: 100
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+    listener:
+      ack-mode: batch

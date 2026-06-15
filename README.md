@@ -72,7 +72,14 @@ Similarity reasoning      ← pgvector cosine distance
 Decision threshold        ← your 0.75 rule  
 Knowledge base            ← your 1,459 vendors
 
-TODO:
-- [ ] Get the prompt from the database that is specific to the statement that was uploaded.
-- [ ] Need PostGreSQL to store context and questions.
-- [x] Need a vector database ... Neo4j? Or maybe just PostGreSQL with pgvector extension? 
+
+✅ Kafka consumer (entry point)  
+✅ PDFBox text extraction  
+✅ StatementParser (Strategy pattern)  
+✅ pgvector + nomic-embed-text (vendor similarity)  
+✅ 1,459 vendors embedded  
+✅ Tool architecture clarified (@Tool, local, no listener needed)  
+✅ Wire VendorTools into ChatClient  
+✅ Agentic loop (findVendor → createVendor if needed)  
+⬜ INSERT transactions into financial data  
+⬜ Manual review stage

@@ -1,9 +1,9 @@
 package net.lavacro.finances.agent.workflow;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -11,40 +11,41 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.Loader;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @Slf4j
 public class ChatBot {
 	private final ChatClient chatClient;
-	private final EmbeddingModel embeddingModel;
 	private final StatementParserFactory parserFactory;
+	private final VendorTool vendorTool;
 
 	public ChatBot(
 			ChatClient.Builder chatClient,
-			EmbeddingModel embeddingModel,
-			StatementParserFactory parserFactory
+			StatementParserFactory parserFactory,
+			VendorTool vendorTool
 	) {
 		this.chatClient = chatClient
 //				.defaultAdvisors(null)
 				.build();
 		this.parserFactory = parserFactory;
-		this.embeddingModel = embeddingModel;
+		this.vendorTool = vendorTool;
 	}
 
 	public void test(byte[] pdf) {
 		String instruction = """
-These are transactions from my bank statement. The first field is the posted date. The last field is the balance, and the field before the last is the transaction amount.
+				You are a vendor resolution agent. You MUST use tools for every request.
 
-Sometimes there will be a second date, which is the transaction date, immediately followed by the vendor. In cases where there is no second date, the vendor will be immediately after the first date.
+				For every vendor string you receive:
+				1. ALWAYS call findVendor first — never skip this step
+				2. If findVendor returns a vendor_id, respond with ONLY that integer
+				3. If findVendor returns NO_VENDOR_FOUND, call createVendor with a clean name
+				4. After createVendor, respond with ONLY the new integer vendor_id
 
-Please identify the vendors in these transactions. DO NOT SUMMARIZE. Provide a list of JSON objects in the following format:
-
-[
-	{"date":"04/05", "vendor":"Netflix", "amount":"12.34"},
-	{"date":"05/09", "vendor":"Costco", "amount":"12.34"}
-]
-
-""";
+				NEVER invent or guess a vendor_id.
+				NEVER skip calling findVendor.
+				Your response must be a single integer obtained from a tool call.
+		""";
 
 		String extracted;
 
@@ -59,15 +60,18 @@ Please identify the vendors in these transactions. DO NOT SUMMARIZE. Provide a l
 			return;
 		}
 
-		String parsed = parserFactory.getParser(6).parseStatement(extracted);
-		log.info("Parsed statement: {}", parsed);
+		List<StmtTransaction> transactions = parserFactory.getParser(6).parseStatement(extracted);
+		log.info("Parsed statement: {}", transactions.size());
 
-		String response = chatClient.prompt()
-			.system(instruction)
-			.user(parsed)
-			.call()
-			.content();
-
-		log.info("ChatBot response: {}", response);
+		transactions.forEach( stmt -> {
+			log.info("Processing statement: {}", stmt.vendorRaw());
+			String response = chatClient.prompt()
+					.system(instruction)
+					.user(stmt.vendorRaw())
+					.tools(vendorTool)
+					.call()
+					.content();
+			log.info("Response: {}", response);
+		});
 	}
 }
