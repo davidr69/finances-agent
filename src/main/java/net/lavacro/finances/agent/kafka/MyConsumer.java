@@ -1,7 +1,6 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import net.lavacro.finances.agent.workflow.ChatBot;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,10 +11,10 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Component
 public class MyConsumer {
-	private final ChatBot chatBot;
+	private final AsyncProcessor asyncProcessor;
 
-	public MyConsumer(ChatBot chatBot) {
-		this.chatBot = chatBot;
+	public MyConsumer(AsyncProcessor asyncProcessor) {
+		this.asyncProcessor = asyncProcessor;
 	}
 
 	@KafkaListener(topics = "finances-topic")
@@ -33,6 +32,6 @@ public class MyConsumer {
 		byte[] payload = message.value();
 
 		log.info("payload size: {}", payload.length);
-		chatBot.test(payload);
+		asyncProcessor.process(filename, accountId, payload);
 	}
 }

@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -21,13 +23,13 @@ public class ChatBot {
 	private final VendorTool vendorTool;
 
 	public ChatBot(
-			ChatClient.Builder chatClient,
+//			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
+			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool
 	) {
-		this.chatClient = chatClient
-//				.defaultAdvisors(null)
-				.build();
+//		this.chatClient = chatClient.build();
+		this.chatClient = ChatClient.builder(chatModel).build();
 		this.parserFactory = parserFactory;
 		this.vendorTool = vendorTool;
 	}
@@ -37,10 +39,11 @@ public class ChatBot {
 				You are a vendor resolution agent. You MUST use tools for every request.
 
 				For every vendor string you receive:
-				1. ALWAYS call findVendor first — never skip this step
-				2. If findVendor returns a vendor_id, respond with ONLY that integer
-				3. If findVendor returns NO_VENDOR_FOUND, call createVendor with a clean name
-				4. After createVendor, respond with ONLY the new integer vendor_id
+				1. If the string appears to have a location (for example "Staten Island NY"), ignore that as it is not part of the vendor's name
+				2. ALWAYS call findVendor first — never skip this step
+				3. If findVendor returns a vendor_id, respond with ONLY that integer
+				4. If findVendor returns NO_VENDOR_FOUND, call createVendor with a clean name
+				5. After createVendor, respond with ONLY the new integer vendor_id
 
 				NEVER invent or guess a vendor_id.
 				NEVER skip calling findVendor.

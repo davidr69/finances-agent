@@ -51,8 +51,6 @@ public class ChaseParser implements StatementParser {
 					started = false;
 				}
 				if(pattern.matcher(line).matches()) {
-					log.info(line);
-
 					int until = line.lastIndexOf(' ');
 					int from = line.lastIndexOf(' ', until - 1);
 
@@ -68,13 +66,9 @@ public class ChaseParser implements StatementParser {
 
 					LocalDate date = LocalDate.parse("2026-" + line.substring(0, 5).replace("/", "-"));
 
-					log.info("date: {}, amount: {}", date, amount);
-
 					line = line.substring(6, from);
-					log.info("Remain: [{}]", line);
 
 					StmtTransaction values = extractValues(line, date, amount);
-					log.info("vendor: {}", values.vendorRaw());
 
 					transactions.add(values);
 				}
@@ -85,6 +79,7 @@ public class ChaseParser implements StatementParser {
 			}
 		}
 
+		log.info("Parsed statement");
 		return transactions;
 	}
 

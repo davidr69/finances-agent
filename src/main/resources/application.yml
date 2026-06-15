@@ -9,6 +9,16 @@ spring:
 
   # AI properties
   ai:
+#    anthropic:
+#      api-key: '${ANTHROPIC_API_KEY}'
+#      chat:
+#        model: claude-sonnet-4-6
+#        max-tokens: 1000
+    google:
+      genai:
+        api-key: '${GEMINI_API_KEY}'
+        chat:
+          model: 'gemini-3.5-flash'
     ollama:
       base-url: http://llm:11434
       chat:
