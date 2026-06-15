@@ -20,7 +20,7 @@ class EmbedVendorsTest {
 	@Autowired
 	JdbcTemplate jdbcTemplate;
 
-//	@Test
+	@Test
 	void embedAllVendors() {
 		List<Map<String, Object>> vendors = jdbcTemplate.queryForList(
 				"SELECT id, description, bank_alias FROM entities WHERE embedding IS NULL"
@@ -43,7 +43,7 @@ class EmbedVendorsTest {
 		IO.println("Embedded " + vendors.size() + " vendors");
 	}
 
-//	@Test
+	@Test
 	void multipleVendorsTest() {
 		String[] vendors = {
 				"Sq *Country Donuts R Staten Island NY Card 1234",
