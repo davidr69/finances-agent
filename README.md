@@ -77,7 +77,6 @@ Knowledge base            ← your 1,459 vendors
 ✅ PDFBox text extraction  
 ✅ StatementParser (Strategy pattern)  
 ✅ pgvector + nomic-embed-text (vendor similarity)  
-✅ 1,459 vendors embedded  
 ✅ Tool architecture clarified (@Tool, local, no listener needed)  
 ✅ Wire VendorTools into ChatClient  
 ✅ Agentic loop (findVendor → createVendor if needed)  
