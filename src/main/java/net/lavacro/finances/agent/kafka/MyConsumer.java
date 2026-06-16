@@ -6,14 +6,16 @@ import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
 public class MyConsumer {
+	private final AsyncProcessor asyncProcessor;
+
+	public MyConsumer(AsyncProcessor asyncProcessor) {
+		this.asyncProcessor = asyncProcessor;
+	}
 
 	@KafkaListener(topics = "finances-topic")
 	public void listen(ConsumerRecord<String, byte[]> message) {
@@ -28,11 +30,8 @@ public class MyConsumer {
 		log.info("account id: {}", accountId);
 
 		byte[] payload = message.value();
-		File file = new File("/tmp/temp.pdf");
-		try (FileOutputStream fos = new FileOutputStream(file)) {
-			fos.write(payload);
-		} catch (IOException e) {
-			log.error("Error writing file: {}", e.getMessage());
-		}
+
+		log.info("payload size: {}", payload.length);
+		asyncProcessor.process(filename, accountId, payload);
 	}
 }

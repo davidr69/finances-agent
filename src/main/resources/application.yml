@@ -1,12 +1,45 @@
 spring:
+  # general properties
   application:
     name: finances-agent
+
+  # datasource stuff (should really remove this and just use envars)
+  datasource:
+    url: jdbc:postgresql://prod-db:5432/finances
+
+  # AI properties
   ai:
+    anthropic:
+      api-key: '${ANTHROPIC_API_KEY}'
+      chat:
+        model: claude-sonnet-4-6
+        max-tokens: 8192
+        connection-timeout: 60000
+        read-timeout: 120000
+    google:
+      genai:
+        api-key: '${GEMINI_API_KEY}'
+        chat:
+          model: 'gemini-3.5-flash'
     ollama:
       base-url: http://llm:11434
       chat:
 #        model: mistral
-        model: qwen2.5:7b
+#        model: qwen2.5:7b
+        model: gemma4
+        num-predict: 8192
+      embedding:
+        model: nomic-embed-text
+#    chat:
+#      memory:
+#        repository:
+#          jdbc:
+#            initialize-schema: always
+#    vectorstore:
+#      pgvector:
+#        initialize-schema: true
+
+  # messaging
   kafka:
     bootstrap-servers: kafka.lavacro.net:9092
     consumer:
@@ -19,3 +52,5 @@ spring:
       fetch-max-wait: 100
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+    listener:
+      ack-mode: batch
