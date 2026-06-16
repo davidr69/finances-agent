@@ -9,11 +9,13 @@ spring:
 
   # AI properties
   ai:
-#    anthropic:
-#      api-key: '${ANTHROPIC_API_KEY}'
-#      chat:
-#        model: claude-sonnet-4-6
-#        max-tokens: 1000
+    anthropic:
+      api-key: '${ANTHROPIC_API_KEY}'
+      chat:
+        model: claude-sonnet-4-6
+        max-tokens: 8192
+        connection-timeout: 60000
+        read-timeout: 120000
     google:
       genai:
         api-key: '${GEMINI_API_KEY}'
@@ -25,7 +27,7 @@ spring:
 #        model: mistral
 #        model: qwen2.5:7b
         model: gemma4
-        num-predict: 4096
+        num-predict: 8192
       embedding:
         model: nomic-embed-text
 #    chat:

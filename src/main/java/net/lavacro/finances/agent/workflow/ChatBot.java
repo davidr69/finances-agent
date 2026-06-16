@@ -1,5 +1,7 @@
 package net.lavacro.finances.agent.workflow;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
@@ -21,10 +23,12 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
+	private static int CHUNK_SIZE = 20;
 
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
-			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool
 	) {
@@ -36,18 +40,41 @@ public class ChatBot {
 
 	public void test(byte[] pdf) {
 		String instruction = """
-				You are a vendor resolution agent. You MUST use tools for every request.
+You are a vendor validation agent for a personal finance system.
 
-				For every vendor string you receive:
-				1. If the string appears to have a location (for example "Staten Island NY"), ignore that as it is not part of the vendor's name
-				2. ALWAYS call findVendor first — never skip this step
-				3. If findVendor returns a vendor_id, respond with ONLY that integer
-				4. If findVendor returns NO_VENDOR_FOUND, call createVendor with a clean name
-				5. After createVendor, respond with ONLY the new integer vendor_id
+You will receive a JSON array of low-confidence vendor matches from a bank statement.
+Each entry has:
+- vendor_from_stmt: the raw string from the bank
+- vendor_from_db: the current best guess matched from our database
+- confidence: similarity score (all will be below 0.80)
+- vendor_id: the current matched vendor ID
 
-				NEVER invent or guess a vendor_id.
-				NEVER skip calling findVendor.
-				Your response must be a single integer obtained from a tool call.
+For each entry:
+1. Use your knowledge of business names and abbreviations to evaluate the match
+2. If vendor_from_db looks correct, keep the vendor_id and set vendor_from_llm to null
+3. If vendor_from_db looks wrong, call findVendor with a better search term
+4. If findVendor returns a better match, use that vendor_id
+5. If findVendor returns NO_VENDOR_FOUND, set vendor_from_llm to your best guess
+   of the clean business name for manual review
+
+Return the COMPLETE original JSON array with these two fields updated:
+- vendor_id: use the confirmed or corrected vendor_id (null if unknown)
+- vendor_from_llm: the clean business name if you couldn't find it in the database, otherwise null
+
+Keep ALL other fields exactly as provided (confidence, amount, posted_date, transaction_date, vendor_from_stmt, vendor_from_db).
+
+No explanation. No markdown. Only valid JSON array.
+
+Example input entry:
+{"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":303,"vendor_from_llm":null}
+
+Example output entry:
+{"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":57,"vendor_from_llm":null}
+
+CRITICAL: Your response must start with [ and end with ]
+Do not write any text before or after the JSON array.
+Do not use markdown. Do not summarize. Do not explain your reasoning.
+Output the complete JSON array for ALL entries with no truncation.
 		""";
 
 		String extracted;
@@ -66,15 +93,36 @@ public class ChatBot {
 		List<StmtTransaction> transactions = parserFactory.getParser(6).parseStatement(extracted);
 		log.info("Parsed statement: {}", transactions.size());
 
-		transactions.forEach( stmt -> {
-			log.info("Processing statement: {}", stmt.vendorRaw());
+		transactions.forEach(item -> {
+			vendorTool.findVendor(item);
+			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
+		});
+
+		List<StmtTransaction> needsValidation = transactions.stream()
+				.filter(m -> m.getConfidence() < 0.80)
+				.toList();
+
+		ObjectMapper mapper = new ObjectMapper();
+		String json = null;
+
+		for(int i = 0; i < needsValidation.size(); i += CHUNK_SIZE) {
+			List<StmtTransaction> chunk = needsValidation.subList(i, Math.min(i + CHUNK_SIZE, needsValidation.size()));
+
+			try {
+				json = mapper.writeValueAsString(needsValidation);
+			} catch(JsonProcessingException e) {
+				log.error("Error parsing JSON: {}", e.getMessage(), e);
+				continue;
+			}
+
+			log.info("Needs validation: {}\n{}", chunk.size(), json);
 			String response = chatClient.prompt()
 					.system(instruction)
-					.user(stmt.vendorRaw())
+					.user(json)
 					.tools(vendorTool)
 					.call()
 					.content();
 			log.info("Response: {}", response);
-		});
+		}
 	}
 }

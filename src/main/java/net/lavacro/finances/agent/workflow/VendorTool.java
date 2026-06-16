@@ -2,6 +2,7 @@ package net.lavacro.finances.agent.workflow;
 
 import com.pgvector.PGvector;
 import lombok.RequiredArgsConstructor;
+import net.lavacro.finances.agent.dto.StmtTransaction;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,26 +32,21 @@ public class VendorTool {
 	LIMIT 1
 	""";
 
-	@Tool(description = "Find a vendor by name using semantic similarity search. Returns the vendor id and name if found with sufficient confidence.")
-	public String findVendor(String rawVendorName) {
-		float[] queryVector = embeddingModel.embed(rawVendorName);
+	public void findVendor(StmtTransaction transaction) {
+		float[] queryVector = embeddingModel.embed(transaction.getVendorRaw());
 
 		PGvector vector = new PGvector(queryVector);
 
 		List<Map<String, Object>> results = jdbcTemplate.queryForList(FIND_VENDOR_QUERY, vector, vector);
 
-		if (results.isEmpty()) return "NO_VENDOR_FOUND";
+		if (results.isEmpty()) return;
 
 		Map<String, Object> row = results.get(0);
 		double score = ((Number) row.get("score")).doubleValue();
 
-		if (score < 0.65) return "NO_VENDOR_FOUND";
-
-		return String.format("vendor_id:%d name:%s score:%.2f",
-				((Number) row.get("id")).longValue(),
-				row.get("description"),
-				score
-		);
+		transaction.setConfidence(score);
+		transaction.setVendorId(((Number) row.get("id")).intValue());
+		transaction.setVendorFromDb((String) row.get("description"));
 	}
 
 	@Tool(description = "Create a new vendor and return its id.")

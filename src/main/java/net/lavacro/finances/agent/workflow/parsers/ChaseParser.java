@@ -6,7 +6,6 @@ import net.lavacro.finances.agent.dto.StmtTransaction;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +50,8 @@ public class ChaseParser implements StatementParser {
 					started = false;
 				}
 				if(pattern.matcher(line).matches()) {
+					StmtTransaction transaction = new StmtTransaction();
+
 					int until = line.lastIndexOf(' ');
 					int from = line.lastIndexOf(' ', until - 1);
 
@@ -64,13 +65,14 @@ public class ChaseParser implements StatementParser {
 						amount = BigDecimal.ZERO;
 					}
 
-					LocalDate date = LocalDate.parse("2026-" + line.substring(0, 5).replace("/", "-"));
+					transaction.setAmount(amount);
+					transaction.setTransactionDate("2026-" + line.substring(0, 5).replace("/", "-"));
+					transaction.setPostedDate(transaction.getTransactionDate());
 
 					line = line.substring(6, from);
+					extractValues(transaction, line);
 
-					StmtTransaction values = extractValues(line, date, amount);
-
-					transactions.add(values);
+					transactions.add(transaction);
 				}
 				continue;
 			}
@@ -83,7 +85,7 @@ public class ChaseParser implements StatementParser {
 		return transactions;
 	}
 
-	private StmtTransaction extractValues(String line, LocalDate postedDate, BigDecimal amount) {
+	private void extractValues(StmtTransaction transaction, String line) {
 		Matcher matcher = vendorPattern.matcher(line);
 		if(matcher.find()) {
 			// original line had this format:
@@ -91,13 +93,10 @@ public class ChaseParser implements StatementParser {
 			// This becomes:
 			// Card Purchase           04/24 Chick Fil A 3400812 Woodbridge NJ Card 1234
 			String date = line.substring(matcher.start(), matcher.end()).trim();
-			LocalDate actualDate = LocalDate.parse("2026-" + date.replace("/", "-"));
-			return new StmtTransaction(
-					postedDate,
-					actualDate,
-					sanitize(line.substring(matcher.end()).replace(" Card", "")),
-					amount
-			);
+			String actualDate = "2026-" + date.replace("/", "-");
+			transaction.setVendorRaw(sanitize(line.substring(matcher.end()).replace(" Card", "")));
+			transaction.setVendorRaw(normalizeVendor(transaction.getVendorRaw())); // just testing
+			transaction.setTransactionDate(actualDate);
 		} else {
 			// original line is:
 			// 04/27 Con Ed of NY     Cecony     12345678901     CCD ID: 1234567890 -123.45 11,111.11
@@ -105,12 +104,7 @@ public class ChaseParser implements StatementParser {
 			// Con Ed of NY     Cecony     12345678901     CCD ID: 1234567890
 			int spacePos = line.indexOf("  ");
 			String vendor = spacePos > 0 ? line.substring(0, spacePos) : line;
-			return new StmtTransaction(
-				postedDate,
-				postedDate,
-				vendor,
-				amount
-			);
+			transaction.setVendorRaw(vendor);
 		}
 	}
 
@@ -122,6 +116,14 @@ public class ChaseParser implements StatementParser {
 				.replaceAll("(CCD|PPD)\\s+ID:\\s*\\w+", "") // transaction IDs
 				.replaceAll("\\b[A-Z0-9]{8,}\\b", "")      // long alphanumeric codes
 				.replaceAll("\\s{2,}", " ")                 // collapse extra spaces
+				.trim();
+	}
+
+	private String normalizeVendor(String raw) {
+		return raw
+				.replaceAll("\\b(Staten Island|New York|Brooklyn|Queens|Bronx|Manhattan)\\b,?\\s*(NY|NJ|CA|MA|MO|WA|UT)?", "")
+				.replaceAll("\\b(NY|NJ|CA|MA|MO|WA|UT|CO)\\b", "")
+				.replaceAll("\\s{2,}", " ")
 				.trim();
 	}
 }
