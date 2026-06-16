@@ -23,7 +23,7 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
-	private static int CHUNK_SIZE = 20;
+	private static final int CHUNK_SIZE = 20;
 
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
@@ -32,7 +32,6 @@ public class ChatBot {
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool
 	) {
-//		this.chatClient = chatClient.build();
 		this.chatClient = ChatClient.builder(chatModel).build();
 		this.parserFactory = parserFactory;
 		this.vendorTool = vendorTool;
@@ -48,18 +47,17 @@ Each entry has:
 - vendor_from_db: the current best guess matched from our database
 - confidence: similarity score (all will be below 0.80)
 - vendor_id: the current matched vendor ID
+- vendor_from_llm: the field YOU are going to populate
 
 For each entry:
 1. Use your knowledge of business names and abbreviations to evaluate the match
-2. If vendor_from_db looks correct, keep the vendor_id and set vendor_from_llm to null
+2. If vendor_from_db looks correct, keep the vendor_id and set vendor_from_llm to that value
 3. If vendor_from_db looks wrong, call findVendor with a better search term
 4. If findVendor returns a better match, use that vendor_id
 5. If findVendor returns NO_VENDOR_FOUND, set vendor_from_llm to your best guess
    of the clean business name for manual review
 
-Return the COMPLETE original JSON array with these two fields updated:
-- vendor_id: use the confirmed or corrected vendor_id (null if unknown)
-- vendor_from_llm: the clean business name if you couldn't find it in the database, otherwise null
+Return the COMPLETE original JSON array with ONLY "vendor_from_llm" updated.
 
 Keep ALL other fields exactly as provided (confidence, amount, posted_date, transaction_date, vendor_from_stmt, vendor_from_db).
 
@@ -69,12 +67,24 @@ Example input entry:
 {"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":303,"vendor_from_llm":null}
 
 Example output entry:
-{"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":57,"vendor_from_llm":null}
+{"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":303,"vendor_from_llm":57}
 
 CRITICAL: Your response must start with [ and end with ]
 Do not write any text before or after the JSON array.
 Do not use markdown. Do not summarize. Do not explain your reasoning.
 Output the complete JSON array for ALL entries with no truncation.
+
+CRITICAL VALIDATION RULES:
+- A match is WRONG if vendor_from_db contains words completely unrelated to vendor_from_stmt
+- When in doubt, call findVendor — do not assume a match is correct
+- These are known wrong match patterns you MUST correct:
+  * "Bk of Amer" or "Bank of America" matched to anything other than a Bank of America entity → call findVendor("Bank of America") \s
+  * Any vendor matched to "Amazon.com" that is not an Amazon purchase → call findVendor with the real name
+  * Any vendor matched to "Staten Island Zoo" that is not a zoo → call findVendor with the real name
+  * Any vendor matched to "Saturn of Staten Island" that is not a car dealer → call findVendor with the real name
+  * "Shoprite" matched to "United Artists" → call findVendor("Shoprite")
+				
+ALWAYS call findVendor when confidence is below 0.65 — never accept the match blindly.
 		""";
 
 		String extracted;
@@ -109,7 +119,7 @@ Output the complete JSON array for ALL entries with no truncation.
 			List<StmtTransaction> chunk = needsValidation.subList(i, Math.min(i + CHUNK_SIZE, needsValidation.size()));
 
 			try {
-				json = mapper.writeValueAsString(needsValidation);
+				json = mapper.writeValueAsString(chunk);
 			} catch(JsonProcessingException e) {
 				log.error("Error parsing JSON: {}", e.getMessage(), e);
 				continue;
