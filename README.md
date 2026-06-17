@@ -67,9 +67,9 @@ The reason for making the capacity 768 is due to the response of the embedding m
 ### misc
 Semantic search system
 
-Semantic understanding    ← nomic-embed-text (genuine AI)  
+Semantic understanding    ← nomic-embed-text (legit AI)  
 Similarity reasoning      ← pgvector cosine distance  
-Decision threshold        ← 0.80 rule  
+Decision threshold        ← 0.80 rule
 
 
 ✅ Kafka consumer (entry point)  

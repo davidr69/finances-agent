@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import org.apache.pdfbox.Loader;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -78,13 +81,21 @@ CRITICAL VALIDATION RULES:
 - A match is WRONG if vendor_from_db contains words completely unrelated to vendor_from_stmt
 - When in doubt, call findVendor — do not assume a match is correct
 - These are known wrong match patterns you MUST correct:
-  * "Bk of Amer" or "Bank of America" matched to anything other than a Bank of America entity → call findVendor("Bank of America") \s
+  * "Bk of Amer" or "Bank of America" matched to anything other than a Bank of America entity → call findVendor("Bank of America")
   * Any vendor matched to "Amazon.com" that is not an Amazon purchase → call findVendor with the real name
   * Any vendor matched to "Staten Island Zoo" that is not a zoo → call findVendor with the real name
   * Any vendor matched to "Saturn of Staten Island" that is not a car dealer → call findVendor with the real name
   * "Shoprite" matched to "United Artists" → call findVendor("Shoprite")
 				
 ALWAYS call findVendor when confidence is below 0.65 — never accept the match blindly.
+
+FINAL OUTPUT REQUIREMENT (read this last, this overrides everything above about format):
+After you finish calling tools and reasoning internally, your VERY LAST message must contain\s
+ONLY the JSON array — nothing else.
+Do not write phrases like "Now I have the vendor ID" or "Let me review."
+Do not summarize what you did.
+Your last message starts with [ and ends with ].
+If you write anything else first, you have failed this task.
 		""";
 
 		String extracted;
@@ -113,7 +124,7 @@ ALWAYS call findVendor when confidence is below 0.65 — never accept the match 
 				.toList();
 
 		ObjectMapper mapper = new ObjectMapper();
-		String json = null;
+		String json;
 
 		for(int i = 0; i < needsValidation.size(); i += CHUNK_SIZE) {
 			List<StmtTransaction> chunk = needsValidation.subList(i, Math.min(i + CHUNK_SIZE, needsValidation.size()));
@@ -126,13 +137,17 @@ ALWAYS call findVendor when confidence is below 0.65 — never accept the match 
 			}
 
 			log.info("Needs validation: {}\n{}", chunk.size(), json);
-			String response = chatClient.prompt()
+			ChatResponse response = chatClient.prompt()
 					.system(instruction)
 					.user(json)
 					.tools(vendorTool)
 					.call()
-					.content();
-			log.info("Response: {}", response);
+					.chatResponse();
+			assert response != null;
+			log.info("Response: {}", Objects.requireNonNull(response.getResult()).getOutput().getText());
+			Usage usage = response.getMetadata().getUsage();
+			log.info("Total tokens: {}", usage.getTotalTokens());
+			log.info("Native usage: {}", usage.getNativeUsage());
 		}
 	}
 }
