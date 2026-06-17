@@ -67,11 +67,11 @@ ALTER TABLE entities ADD COLUMN embedding vector(768);
 
 Semantic search system
 
+```text
 Semantic understanding    ← nomic-embed-text (genuine AI)  
 Similarity reasoning      ← pgvector cosine distance  
-Decision threshold        ← your 0.75 rule  
-Knowledge base            ← your 1,459 vendors
-
+Decision threshold        ← 0.80 rule  
+```
 
 ✅ Kafka consumer (entry point)  
 ✅ PDFBox text extraction  

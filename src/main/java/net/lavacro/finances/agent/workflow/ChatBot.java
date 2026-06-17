@@ -23,12 +23,12 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
-	private static final int CHUNK_SIZE = 20;
+	private static final int CHUNK_SIZE = 5;
 
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
-//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
-			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
+			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+//			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool
 	) {
