@@ -47,7 +47,8 @@ public class ChaseParser implements StatementParser {
 		for (String line : lines) {
 			if(started) {
 				if (line.contains("Ending Balance")) {
-					started = false;
+					// going to ignore savings account
+					break;
 				}
 				if(pattern.matcher(line).matches()) {
 					StmtTransaction transaction = new StmtTransaction();
@@ -56,7 +57,7 @@ public class ChaseParser implements StatementParser {
 					int from = line.lastIndexOf(' ', until - 1);
 
 					// number may have a comma for thousands indicator, so ...
-					BigDecimal amount = null;
+					BigDecimal amount;
 					try {
 						Number number = format.parse(line.substring(from + 1, until));
 						amount = new BigDecimal(number.toString());

@@ -21,29 +21,6 @@ class EmbedVendorsTest {
 	JdbcTemplate jdbcTemplate;
 
 	@Test
-	void embedAllVendors() {
-		List<Map<String, Object>> vendors = jdbcTemplate.queryForList(
-				"SELECT id, description, bank_alias FROM entities WHERE embedding IS NULL"
-		);
-
-		for (Map<String, Object> vendor : vendors) {
-			Long id = ((Number) vendor.get("id")).longValue();
-			String description = (String) vendor.get("description");
-			String bankAlias = (String) vendor.get("bank_alias");
-
-			String concat = bankAlias == null || bankAlias.isEmpty() ? description : String.format("%s %s", description, bankAlias);
-			float[] vector = embeddingModel.embed(concat);
-
-			jdbcTemplate.update(
-					"UPDATE entities SET embedding = ? WHERE id = ?",
-					new PGvector(vector), id
-			);
-		}
-
-		IO.println("Embedded " + vendors.size() + " vendors");
-	}
-
-	@Test
 	void multipleVendorsTest() {
 		String[] vendors = {
 				"Sq *Country Donuts R Staten Island NY Card 1234",
@@ -93,12 +70,14 @@ class EmbedVendorsTest {
 				score
 		));
 
-		resp.ifPresent(vendorMatch -> IO.println(vendorMatch.toString()));
+		resp.ifPresent(vendorMatch ->
+				IO.println(vendorMatch.toString() + ", confident: " + vendorMatch.isConfident() + "\n")
+		);
 	}
 }
 
 record VendorMatch(long id, String description, double score) {
 	public boolean isConfident() {
-		return score >= 0.90;
+		return score >= 0.80;
 	}
 }
