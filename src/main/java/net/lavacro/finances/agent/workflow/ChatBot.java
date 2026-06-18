@@ -130,7 +130,7 @@ If you write anything else first, you have failed this task.
 			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
 		});
 
-		actionService.addToStagingTable(transactions.stream()
+		actionService.addToStagingTableUsingVector(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
 				.toList()
 		);
@@ -153,7 +153,6 @@ If you write anything else first, you have failed this task.
 			}
 
 			log.info("Validating ...");
-//			log.info("Needs validation: {}\n{}", chunk.size(), json);
 			ChatResponse response = chatClient.prompt()
 					.system(instruction)
 					.user(json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].")
@@ -178,6 +177,8 @@ If you write anything else first, you have failed this task.
 			Usage usage = response.getMetadata().getUsage();
 			log.info("Total tokens: {}", usage.getTotalTokens());
 			log.info("Native usage: {}", usage.getNativeUsage());
+
+			actionService.addToStagingTableUsingLlm(jsonResponse);
 		}
 	}
 }

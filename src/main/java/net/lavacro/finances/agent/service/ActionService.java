@@ -6,8 +6,11 @@ import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.entities.ActionEntity;
 import net.lavacro.finances.agent.repositories.ActionRepository;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -16,12 +19,12 @@ import java.util.List;
 public class ActionService {
 	private final ActionRepository actionRepository;
 
-	public void addToStagingTable(List<StmtTransaction> transactions) {
+	private void addToStagingTable(List<StmtTransaction> transactions, boolean useVectorId) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
 			ActionEntity entity = new ActionEntity();
 
-			entity.setEntity(transaction.getVendorId());
+			entity.setEntity(useVectorId ? transaction.getVendorId() : transaction.getVendorFromLlm());
 			entity.setAccount(6);
 			entity.setAmount(transaction.getAmount());
 			entity.setMethod(11);
@@ -33,5 +36,15 @@ public class ActionService {
 			actionRepository.save(entity);
 		}
 		log.info("Completed adding transactions");
+	}
+
+	public void addToStagingTableUsingVector(List<StmtTransaction> transactions) {
+		addToStagingTable(transactions, true);
+	}
+
+	public void addToStagingTableUsingLlm(String json) {
+		ObjectMapper mapper = new ObjectMapper();
+		List<StmtTransaction> transactions = mapper.readValue(json.getBytes(StandardCharsets.UTF_8), ArrayList.class);
+		addToStagingTable(transactions, false);
 	}
 }
