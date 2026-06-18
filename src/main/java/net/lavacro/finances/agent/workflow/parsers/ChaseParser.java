@@ -47,8 +47,7 @@ public class ChaseParser implements StatementParser {
 		for (String line : lines) {
 			if(started) {
 				if (line.contains("Ending Balance")) {
-					// going to ignore savings account
-					break;
+					started = false;
 				}
 				if(pattern.matcher(line).matches()) {
 					StmtTransaction transaction = new StmtTransaction();

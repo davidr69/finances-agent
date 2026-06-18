@@ -6,11 +6,11 @@ import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.entities.ActionEntity;
 import net.lavacro.finances.agent.repositories.ActionRepository;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -44,7 +44,16 @@ public class ActionService {
 
 	public void addToStagingTableUsingLlm(String json) {
 		ObjectMapper mapper = new ObjectMapper();
-		List<StmtTransaction> transactions = mapper.readValue(json.getBytes(StandardCharsets.UTF_8), ArrayList.class);
-		addToStagingTable(transactions, false);
+		List<StmtTransaction> transactions = null;
+		try {
+			transactions = mapper.readValue(json.getBytes(StandardCharsets.UTF_8), new TypeReference<>(){});
+		} catch(Exception e) {
+			log.error("Deserialization error: {}", e.getMessage(), e);
+		}
+		if(transactions != null) {
+			addToStagingTable(transactions, false);
+		} else {
+			log.warn("No transactions found");
+		}
 	}
 }
