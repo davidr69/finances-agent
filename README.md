@@ -74,3 +74,4 @@ Decision threshold        ← 0.80 rule
 ### TODO:
 - persist proper account
 - how do I prevent duplicate records on re-run?
+- persist transactions guessed by LLM
