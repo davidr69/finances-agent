@@ -22,8 +22,4 @@ public class ActionEntity {
 	private BigDecimal amount;
 	private LocalDate mydate;
 	private Integer method;
-	private String reference;
-	private Boolean visible;
-	private Boolean reconciled;
-	private Integer category;
 }

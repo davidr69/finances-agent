@@ -55,6 +55,8 @@ $ apt install postgresql-16-pgvector
 CREATE EXTENSION vector;
 
 ALTER TABLE entities ADD COLUMN embedding vector(768);
+
+CREATE INDEX ON entities USING hnsw (embedding vector_cosine_ops);
 ```
 
 The reason for making the capacity 768 is due to the response of the embedding model:
