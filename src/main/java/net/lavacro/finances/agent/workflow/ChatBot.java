@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
+import net.lavacro.finances.agent.service.ActionService;
+import net.lavacro.finances.agent.service.EmbedVectorService;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
@@ -26,18 +28,25 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
+	private final EmbedVectorService embedVectorService;
+	private final ActionService actionService;
+
 	private static final int CHUNK_SIZE = 5;
 
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
-			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
-//			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
+//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
-			VendorTool vendorTool
+			VendorTool vendorTool,
+			EmbedVectorService embedVectorService,
+			ActionService actionService
 	) {
 		this.chatClient = ChatClient.builder(chatModel).build();
 		this.parserFactory = parserFactory;
 		this.vendorTool = vendorTool;
+		this.embedVectorService = embedVectorService;
+		this.actionService = actionService;
 	}
 
 	public void test(byte[] pdf) {
@@ -98,6 +107,8 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
+		embedVectorService.embedAllVendors();;
+
 		String extracted;
 
 		try (
@@ -119,6 +130,11 @@ If you write anything else first, you have failed this task.
 			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
 		});
 
+		actionService.addToStagingTable(transactions.stream()
+				.filter(m -> m.getConfidence() >= 0.80)
+				.toList()
+		);
+
 		List<StmtTransaction> needsValidation = transactions.stream()
 				.filter(m -> m.getConfidence() < 0.80)
 				.toList();
@@ -136,15 +152,29 @@ If you write anything else first, you have failed this task.
 				continue;
 			}
 
-			log.info("Needs validation: {}\n{}", chunk.size(), json);
+			log.info("Validating ...");
+//			log.info("Needs validation: {}\n{}", chunk.size(), json);
 			ChatResponse response = chatClient.prompt()
 					.system(instruction)
-					.user(json)
+					.user(json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].")
 					.tools(vendorTool)
 					.call()
 					.chatResponse();
-			assert response != null;
-			log.info("Response: {}", Objects.requireNonNull(response.getResult()).getOutput().getText());
+
+			if(response == null) {
+				log.error("No response from chat client");
+				continue;
+			}
+
+			String jsonResponse = Objects.requireNonNull(response.getResult()).getOutput().getText();
+			assert jsonResponse != null;
+			int jsonStart = jsonResponse.indexOf('[');
+
+			if(jsonStart > 0) {
+				jsonResponse = jsonResponse.substring(jsonStart);
+			}
+
+			log.info("Response: {}", jsonResponse);
 			Usage usage = response.getMetadata().getUsage();
 			log.info("Total tokens: {}", usage.getTotalTokens());
 			log.info("Native usage: {}", usage.getNativeUsage());

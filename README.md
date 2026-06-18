@@ -71,13 +71,6 @@ Semantic understanding    ← nomic-embed-text (legit AI)
 Similarity reasoning      ← pgvector cosine distance  
 Decision threshold        ← 0.80 rule
 
-
-✅ Kafka consumer (entry point)  
-✅ PDFBox text extraction  
-✅ StatementParser (Strategy pattern)  
-✅ pgvector + nomic-embed-text (vendor similarity)  
-✅ Tool architecture clarified (@Tool, local, no listener needed)  
-✅ Wire VendorTools into ChatClient  
-✅ Agentic loop (findVendor → createVendor if needed)  
-⬜ INSERT transactions into financial data  
-⬜ Manual review stage
+### TODO:
+- persist proper account
+- how do I prevent duplicate records on re-run?
