@@ -33,7 +33,7 @@ public class ChaseParser implements StatementParser {
 	 * 3. the penultimate field is the amount
 	 * <br/>
 	 * The logic required here is as follows:
-	 * - after removing the above mentioned fields, if there is another mm/dd field, everything after that is the vendor
+	 * - after removing the above-mentioned fields, if there is another mm/dd field, everything after that is the vendor
 	 * - otherwise, everything up to two consecutive spaces is the vendor
 	 * Rather than immediately split into tokens, we can first deal with substrings, and THEN tokenize the rest.
 	 */
@@ -43,6 +43,7 @@ public class ChaseParser implements StatementParser {
 		String[] lines = pdf.split("\n");
 		boolean started = false;
 		List<StmtTransaction> transactions = new ArrayList<>();
+		Integer lineNumber = 1;
 
 		for (String line : lines) {
 			if(started) {
@@ -65,6 +66,7 @@ public class ChaseParser implements StatementParser {
 						amount = BigDecimal.ZERO;
 					}
 
+					transaction.setId(lineNumber++);
 					transaction.setAmount(amount);
 					transaction.setTransactionDate("2026-" + line.substring(0, 5).replace("/", "-"));
 					transaction.setPostedDate(transaction.getTransactionDate());

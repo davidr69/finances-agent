@@ -22,4 +22,7 @@ public class ActionEntity {
 	private BigDecimal amount;
 	private LocalDate mydate;
 	private Integer method;
+
+	@Column(name = "statement_order")
+	private Integer statementOrder;
 }

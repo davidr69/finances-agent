@@ -28,6 +28,7 @@ public class ActionService {
 			entity.setAccount(6);
 			entity.setAmount(transaction.getAmount());
 			entity.setMethod(11);
+			entity.setStatementOrder(transaction.getId());
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));

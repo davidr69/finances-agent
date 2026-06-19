@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class StmtTransaction {
+	private Integer id;
+
 	@JsonProperty("posted_date")
 	private String postedDate;
 
