@@ -1,3 +1,12 @@
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
 spring:
   # general properties
   application:
