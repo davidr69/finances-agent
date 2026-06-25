@@ -2,22 +2,21 @@
 
 My custom financial application requires entering transaction manually. With data since the year 2001, that represents a significant amount of data entry time.
 
-I added a statement upload feature which does nothing more than accept the statement as a PDF and publish a Kafka message with the contents of the statement.
+I added a statement upload feature which accepts the statement as a PDF and publishes a Kafka message with the contents of the statement.
 
-A separate microservice was required, which serves as a workflow with one agentic decision point. It performs the following steps:
+A separate microservice (this app) was required which serves as a workflow with one agentic decision point. It performs the following steps:
 - consumes the message
 - parses the PDF
 - removes all extraneous information (isolates transactions)
-- per transaction, consult the vector database to obtain a vendor confidence score
+- per transaction, obtain the cosine vector to determine vendor confidence score
 - for confidence scores >= 0.80, place directly in staging table
 - for confidence scores < 0.80:
   - sends to the LLM to determine vendor using db and general knowledge
   - if a vendor cannot be determined, create a vendor in the database
   - write the transactions to the staging table
+- manual review in the web app provides feedback to further refine vectors
 
-Context is preserved in the database so that a restart or switch of LLM preserves “memory”.
-
-## Conceptual idea
+## Workflow
 
 ![workflow](images/workflow.png)
 
