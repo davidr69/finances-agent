@@ -1,6 +1,8 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.kafka.model.DecisionModel;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -33,5 +35,18 @@ public class MyConsumer {
 
 		log.info("payload size: {}", payload.length);
 		asyncProcessor.process(filename, accountId, payload);
+	}
+
+	@KafkaListener(topics = "finances-decision")
+	public void listenDecision(ConsumerRecord<String, DecisionModel> message) {
+		log.info("Received decision record: {}", message);
+
+		DecisionModel decisionModel = message.value();
+		log.info("decision: {}", decisionModel.getDecision());
+		log.info("transaction id: {}", decisionModel.getTransactionId());
+		log.info("original vendor id: {}", decisionModel.getOriginalVendorId());
+		log.info("original vendor name: {}", decisionModel.getOriginalVendorName());
+		log.info("new vendor id: {}", decisionModel.getNewVendorId());
+		log.info("new vendor name: {}", decisionModel.getNewVendorName());
 	}
 }
