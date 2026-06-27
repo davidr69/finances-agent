@@ -1,6 +1,7 @@
 package net.lavacro.finances.agent.kafka.config;
 
 import net.lavacro.finances.agent.kafka.model.DecisionModel;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
@@ -10,19 +11,24 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableKafka
 public class KafkaConfig {
-
 	@Bean
 	public ConsumerFactory<String, byte[]> byteArrayConsumerFactory(KafkaProperties kafkaProperties) {
-		return new DefaultKafkaConsumerFactory<>(
-				kafkaProperties.buildConsumerProperties(),
-				new StringDeserializer(),
-				new ByteArrayDeserializer()
-		);
+		Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+		props.put("spring.deserializer.key.delegate.class", StringDeserializer.class.getName());
+		props.put("spring.deserializer.value.delegate.class", ByteArrayDeserializer.class.getName());
+
+		return new DefaultKafkaConsumerFactory<>(props);
 	}
 
 	@Bean
@@ -37,13 +43,18 @@ public class KafkaConfig {
 
 	@Bean
 	public ConsumerFactory<String, DecisionModel> decisionConsumerFactory(KafkaProperties kafkaProperties) {
-		var jsonDeserializer = new JacksonJsonDeserializer<>(DecisionModel.class);
-		jsonDeserializer.trustedPackages("net.lavacro.finances.agent.kafka.model");
-		return new DefaultKafkaConsumerFactory<>(
-				kafkaProperties.buildConsumerProperties(),
-				new StringDeserializer(),
-				jsonDeserializer
-		);
+		Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+		props.put("spring.deserializer.key.delegate.class", StringDeserializer.class.getName());
+		props.put("spring.deserializer.value.delegate.class", JacksonJsonDeserializer.class.getName());
+
+		props.put(JacksonJsonDeserializer.TYPE_MAPPINGS,
+				"com.lavacro.finances.kafka.model.DecisionModel:net.lavacro.finances.agent.kafka.model.DecisionModel");
+
+		props.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.lavacro.finances.kafka.model");
+
+		return new DefaultKafkaConsumerFactory<>(props);
 	}
 
 	@Bean

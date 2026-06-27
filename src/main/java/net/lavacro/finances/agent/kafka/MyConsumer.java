@@ -40,13 +40,6 @@ public class MyConsumer {
 	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")
 	public void listenDecision(ConsumerRecord<String, DecisionModel> message) {
 		log.info("Received decision record: {}", message);
-
-		DecisionModel decisionModel = message.value();
-		log.info("decision: {}", decisionModel.getDecision());
-		log.info("transaction id: {}", decisionModel.getTransactionId());
-		log.info("original vendor id: {}", decisionModel.getOriginalVendorId());
-		log.info("original vendor name: {}", decisionModel.getOriginalVendorName());
-		log.info("new vendor id: {}", decisionModel.getNewVendorId());
-		log.info("new vendor name: {}", decisionModel.getNewVendorName());
+		asyncProcessor.processDecision(message.value());
 	}
 }

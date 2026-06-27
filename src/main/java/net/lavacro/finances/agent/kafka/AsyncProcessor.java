@@ -1,6 +1,7 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.kafka.model.DecisionModel;
 import net.lavacro.finances.agent.workflow.ChatBot;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,16 @@ public class AsyncProcessor {
     public void process(String fileName, String accountId, byte[] payload) {
         log.info("[async] processing file={} accountId={} payloadSize={}", fileName, accountId, payload == null ? 0 : payload.length);
         chatBot.test(payload);
+    }
+
+    @Async
+    public void processDecision(DecisionModel decisionModel) {
+        log.info("decision: {}", decisionModel.getDecision());
+        log.info("transaction id: {}", decisionModel.getTransactionId());
+        log.info("original vendor id: {}", decisionModel.getOriginalVendorId());
+        log.info("original vendor name: {}", decisionModel.getOriginalVendorName());
+        log.info("new vendor id: {}", decisionModel.getNewVendorId());
+        log.info("new vendor name: {}", decisionModel.getNewVendorName());
     }
 }
 
