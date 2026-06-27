@@ -1,7 +1,7 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import net.lavacro.finances.agent.kafka.model.DecisionModel;
+import net.lavacro.finances.shared.proto.DecisionProto;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
@@ -38,8 +38,8 @@ public class MyConsumer {
 	}
 
 	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")
-	public void listenDecision(ConsumerRecord<String, DecisionModel> message) {
+	public void listenDecision(ConsumerRecord<String, DecisionProto.DecisionMessage> message) {
 		log.info("Received decision record: {}", message);
-		asyncProcessor.processDecision(message.value());
+		//asyncProcessor.processDecision(message.value());
 	}
 }
