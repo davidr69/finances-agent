@@ -1,8 +1,8 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import net.lavacro.finances.agent.kafka.model.DecisionModel;
 import net.lavacro.finances.agent.workflow.ChatBot;
+import net.lavacro.finances.shared.proto.DecisionProto;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +22,7 @@ public class AsyncProcessor {
     }
 
     @Async
-    public void processDecision(DecisionModel decisionModel) {
+    public void processDecision(DecisionProto.DecisionMessage decisionModel) {
         log.info("decision: {}", decisionModel.getDecision());
         log.info("transaction id: {}", decisionModel.getTransactionId());
         log.info("original vendor id: {}", decisionModel.getOriginalVendorId());

@@ -40,6 +40,6 @@ public class MyConsumer {
 	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")
 	public void listenDecision(ConsumerRecord<String, DecisionProto.DecisionMessage> message) {
 		log.info("Received decision record: {}", message);
-		//asyncProcessor.processDecision(message.value());
+		asyncProcessor.processDecision(message.value());
 	}
 }
