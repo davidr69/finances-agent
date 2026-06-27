@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "net.lavacro.finances.shared.proto";
+option java_outer_classname = "DecisionProto";
+
+message DecisionMessage {
+  enum Decision {
+    UNKNOWN = 0;
+    ACCEPT_SUGGESTED = 1; // accepted LLM's vendor (existing or newly created)
+    CHANGE_TO_EXISTING = 2; // overrode LLM's new vendor with an existing one
+  }
+
+  Decision decision = 1;
+  int64 transaction_id = 2;
+  int64 original_vendor_id = 3;
+  string original_vendor_name = 4;
+  int64 new_vendor_id = 5;
+  string new_vendor_name = 6;
+}
