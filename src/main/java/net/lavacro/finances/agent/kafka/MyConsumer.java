@@ -37,7 +37,7 @@ public class MyConsumer {
 		asyncProcessor.process(filename, accountId, payload);
 	}
 
-	@KafkaListener(topics = "finances-decision")
+	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")
 	public void listenDecision(ConsumerRecord<String, DecisionModel> message) {
 		log.info("Received decision record: {}", message);
 
