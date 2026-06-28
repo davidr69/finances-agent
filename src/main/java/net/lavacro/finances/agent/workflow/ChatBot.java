@@ -33,6 +33,7 @@ public class ChatBot {
 
 	private static final int CHUNK_SIZE = 5;
 
+	// TODO: allow the LLM to be specified via Spring resolvers
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
 //			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
@@ -49,6 +50,7 @@ public class ChatBot {
 		this.actionService = actionService;
 	}
 
+	// TODO: rename to something more descriptive
 	public void test(byte[] pdf) {
 		String instruction = """
 You are a vendor validation agent for a personal finance system.
@@ -107,7 +109,8 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
-		embedVectorService.embedAllVendors();;
+		// TODO: put this in feedback loop, per user's selection
+//		embedVectorService.embedAllVendors();;
 
 		String extracted;
 
@@ -122,6 +125,7 @@ If you write anything else first, you have failed this task.
 			return;
 		}
 
+		// TODO: provide actual account ID
 		List<StmtTransaction> transactions = parserFactory.getParser(6).parseStatement(extracted);
 		log.info("Parsed statement: {}", transactions.size());
 
@@ -130,7 +134,7 @@ If you write anything else first, you have failed this task.
 			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
 		});
 
-		actionService.addToStagingTableUsingVector(transactions.stream()
+		actionService.addToStagingTable(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
 				.toList()
 		);

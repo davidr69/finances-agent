@@ -1,6 +1,7 @@
 package net.lavacro.finances.agent;
 
 import com.pgvector.PGvector;
+import net.lavacro.finances.agent.service.EmbedVectorService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,9 @@ class EmbedVendorsTest {
 
 	@Autowired
 	JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	EmbedVectorService embedVectorService;
 
 	@Test
 	void multipleVendorsTest() {
@@ -73,6 +77,11 @@ class EmbedVendorsTest {
 		resp.ifPresent(vendorMatch ->
 				IO.println(vendorMatch.toString() + ", confident: " + vendorMatch.isConfident() + "\n")
 		);
+	}
+
+	@Test
+	void embedVectorTest() {
+		embedVectorService.embedAllVendors();;
 	}
 }
 

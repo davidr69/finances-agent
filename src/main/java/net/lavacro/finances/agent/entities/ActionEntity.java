@@ -25,4 +25,7 @@ public class ActionEntity {
 
 	@Column(name = "statement_order")
 	private Integer statementOrder;
+
+	@Column(name = "llm_entity")
+	private Integer llmEntity;
 }
