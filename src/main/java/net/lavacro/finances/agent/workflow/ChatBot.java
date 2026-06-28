@@ -50,8 +50,7 @@ public class ChatBot {
 		this.actionService = actionService;
 	}
 
-	// TODO: rename to something more descriptive
-	public void test(byte[] pdf) {
+	public void workflow(byte[] pdf, int account) {
 		String instruction = """
 You are a vendor validation agent for a personal finance system.
 

@@ -16,9 +16,9 @@ public class AsyncProcessor {
     }
 
     @Async
-    public void process(String fileName, String accountId, byte[] payload) {
+    public void process(String fileName, Integer accountId, byte[] payload) {
         log.info("[async] processing file={} accountId={} payloadSize={}", fileName, accountId, payload == null ? 0 : payload.length);
-        chatBot.test(payload);
+        chatBot.workflow(payload, accountId);
     }
 
     @Async

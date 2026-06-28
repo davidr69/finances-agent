@@ -18,6 +18,7 @@ public class ActionEntity {
 	private Integer id;
 
 	private Integer entity;
+	private String description;
 	private Integer account;
 	private BigDecimal amount;
 	private LocalDate mydate;

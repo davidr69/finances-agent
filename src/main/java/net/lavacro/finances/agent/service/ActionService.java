@@ -25,6 +25,7 @@ public class ActionService {
 			ActionEntity entity = new ActionEntity();
 
 			entity.setEntity(transaction.getVendorId());
+			entity.setDescription(transaction.getVendorRaw());
 			entity.setAccount(6);
 			entity.setAmount(transaction.getAmount());
 			entity.setMethod(11);
