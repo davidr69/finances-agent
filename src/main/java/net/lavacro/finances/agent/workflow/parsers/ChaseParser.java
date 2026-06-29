@@ -43,7 +43,7 @@ public class ChaseParser implements StatementParser {
 		String[] lines = pdf.split("\n");
 		boolean started = false;
 		List<StmtTransaction> transactions = new ArrayList<>();
-		Integer lineNumber = 1;
+		int lineNumber = 1;
 
 		for (String line : lines) {
 			if(started) {

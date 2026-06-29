@@ -19,16 +19,18 @@ import java.util.List;
 public class ActionService {
 	private final ActionRepository actionRepository;
 
-	private void addToStagingTable(List<StmtTransaction> transactions, boolean useVectorId) {
+	public void addToStagingTable(List<StmtTransaction> transactions) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
 			ActionEntity entity = new ActionEntity();
 
-			entity.setEntity(useVectorId ? transaction.getVendorId() : transaction.getVendorFromLlm());
+			entity.setEntity(transaction.getVendorId());
+			entity.setDescription(transaction.getVendorRaw());
 			entity.setAccount(6);
 			entity.setAmount(transaction.getAmount());
 			entity.setMethod(11);
 			entity.setStatementOrder(transaction.getId());
+			entity.setLlmEntity(transaction.getVendorFromLlm());
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
@@ -37,10 +39,6 @@ public class ActionService {
 			actionRepository.save(entity);
 		}
 		log.info("Completed adding transactions");
-	}
-
-	public void addToStagingTableUsingVector(List<StmtTransaction> transactions) {
-		addToStagingTable(transactions, true);
 	}
 
 	public void addToStagingTableUsingLlm(String json) {
@@ -52,7 +50,7 @@ public class ActionService {
 			log.error("Deserialization error: {}", e.getMessage(), e);
 		}
 		if(transactions != null) {
-			addToStagingTable(transactions, false);
+			addToStagingTable(transactions);
 		} else {
 			log.warn("No transactions found");
 		}

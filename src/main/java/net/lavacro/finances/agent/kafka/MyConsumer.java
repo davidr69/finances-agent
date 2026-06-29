@@ -34,7 +34,19 @@ public class MyConsumer {
 		byte[] payload = message.value();
 
 		log.info("payload size: {}", payload.length);
-		asyncProcessor.process(filename, accountId, payload);
+
+		if(accountId == null) {
+			log.error("account id is null");
+			return;
+		}
+
+		Integer accountNumber = null;
+		try {
+			accountNumber = Integer.parseInt(accountId);
+			asyncProcessor.process(filename, accountNumber, payload);
+		}  catch (NumberFormatException e) {
+			log.error("Invalid account id: {}", accountId);
+		}
 	}
 
 	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")

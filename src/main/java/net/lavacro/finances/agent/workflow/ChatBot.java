@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.service.ActionService;
-import net.lavacro.finances.agent.service.EmbedVectorService;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
@@ -28,28 +27,26 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
-	private final EmbedVectorService embedVectorService;
 	private final ActionService actionService;
 
 	private static final int CHUNK_SIZE = 5;
 
+	// TODO: allow the LLM to be specified via Spring resolvers
 	public ChatBot(
 //			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
 //			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
 			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool,
-			EmbedVectorService embedVectorService,
 			ActionService actionService
 	) {
 		this.chatClient = ChatClient.builder(chatModel).build();
 		this.parserFactory = parserFactory;
 		this.vendorTool = vendorTool;
-		this.embedVectorService = embedVectorService;
 		this.actionService = actionService;
 	}
 
-	public void test(byte[] pdf) {
+	public void workflow(byte[] pdf, int account) {
 		String instruction = """
 You are a vendor validation agent for a personal finance system.
 
@@ -107,8 +104,6 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
-		embedVectorService.embedAllVendors();;
-
 		String extracted;
 
 		try (
@@ -122,7 +117,7 @@ If you write anything else first, you have failed this task.
 			return;
 		}
 
-		List<StmtTransaction> transactions = parserFactory.getParser(6).parseStatement(extracted);
+		List<StmtTransaction> transactions = parserFactory.getParser(account).parseStatement(extracted);
 		log.info("Parsed statement: {}", transactions.size());
 
 		transactions.forEach(item -> {
@@ -130,7 +125,7 @@ If you write anything else first, you have failed this task.
 			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
 		});
 
-		actionService.addToStagingTableUsingVector(transactions.stream()
+		actionService.addToStagingTable(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
 				.toList()
 		);
