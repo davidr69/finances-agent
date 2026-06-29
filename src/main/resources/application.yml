@@ -1,3 +1,12 @@
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
 spring:
   # general properties
   application:
@@ -50,7 +59,5 @@ spring:
       client-id: 'finances-agent-consumer'
       fetch-min-size: 4096
       fetch-max-wait: 100
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
     listener:
       ack-mode: batch

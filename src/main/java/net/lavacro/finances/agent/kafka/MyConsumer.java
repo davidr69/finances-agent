@@ -1,6 +1,8 @@
 package net.lavacro.finances.agent.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.shared.proto.DecisionProto;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -32,6 +34,24 @@ public class MyConsumer {
 		byte[] payload = message.value();
 
 		log.info("payload size: {}", payload.length);
-		asyncProcessor.process(filename, accountId, payload);
+
+		if(accountId == null) {
+			log.error("account id is null");
+			return;
+		}
+
+		Integer accountNumber = null;
+		try {
+			accountNumber = Integer.parseInt(accountId);
+			asyncProcessor.process(filename, accountNumber, payload);
+		}  catch (NumberFormatException e) {
+			log.error("Invalid account id: {}", accountId);
+		}
+	}
+
+	@KafkaListener(topics = "finances-decision", containerFactory = "decisionKafkaListenerContainerFactory")
+	public void listenDecision(ConsumerRecord<String, DecisionProto.DecisionMessage> message) {
+		log.info("Received decision record: {}", message);
+		asyncProcessor.processDecision(message.value());
 	}
 }

@@ -18,6 +18,7 @@ public class ActionEntity {
 	private Integer id;
 
 	private Integer entity;
+	private String description;
 	private Integer account;
 	private BigDecimal amount;
 	private LocalDate mydate;
@@ -25,4 +26,7 @@ public class ActionEntity {
 
 	@Column(name = "statement_order")
 	private Integer statementOrder;
+
+	@Column(name = "llm_entity")
+	private Integer llmEntity;
 }

@@ -2,22 +2,21 @@
 
 My custom financial application requires entering transaction manually. With data since the year 2001, that represents a significant amount of data entry time.
 
-I added a statement upload feature which does nothing more than accept the statement as a PDF and publish a Kafka message with the contents of the statement.
+I added a statement upload feature which accepts the statement as a PDF and publishes a Kafka message with the contents of the statement.
 
-A separate microservice was required, which serves as a workflow with one agentic decision point. It performs the following steps:
+A separate microservice (this app) was required which serves as a workflow with one agentic decision point. It performs the following steps:
 - consumes the message
 - parses the PDF
 - removes all extraneous information (isolates transactions)
-- per transaction, consult the vector database to obtain a vendor confidence score
+- per transaction, obtain the cosine vector to determine vendor confidence score
 - for confidence scores >= 0.80, place directly in staging table
 - for confidence scores < 0.80:
   - sends to the LLM to determine vendor using db and general knowledge
   - if a vendor cannot be determined, create a vendor in the database
   - write the transactions to the staging table
+- manual review in the web app provides feedback to further refine vectors
 
-Context is preserved in the database so that a restart or switch of LLM preserves “memory”.
-
-## Conceptual idea
+## Workflow
 
 ![workflow](images/workflow.png)
 
@@ -29,7 +28,7 @@ were tested:
 - qwen2.5:7b
 - gemma4
 
-One commercial LLM was tested: Anthropic Claude Sonnet 4.6
+The commercial LLM that was tested is Anthropic Claude Sonnet 4.6, and upon comparing the results of local LLM’s with Anthropic’s, I settled on Claude as the default for productions and gemma4 for development.
 
 For calculating vectors, there is also a nomic embedding model:
 ```shell
@@ -40,11 +39,11 @@ qwen2.5:7b      completion,tools
 mistral:latest  completion,tools
 ```
 
-Of the three local LLM‘s, only gemma4 is multi-modal. Despite that, PDF‘s must first be rasterized prior to uploading. Commercial LLM’s do this implicitly without the user being aware, but it must be explicitly done here.
+Of the three local LLM‘s, only gemma4 is multi-modal. Despite that, PDF‘s must first be rasterized prior to uploading. Commercial LLM’s do this implicitly without the user’s knowledge, but it must be explicitly done here.
 
-The initial idea was to send PDF‘s to the LLM and have it figure out everything, returning JSON-formatted transactions. Both mistral and qwen2.5:7b were unable to understand how to identify transactions. gemma4 was able to identify the first two transactions correctly, and then it quickly hallucinated.
+The idea of sending an entire PDF to an LLM and have it figure out everything is misguided and inefficient. Both mistral and qwen2.5:7b were unable to understand how to identify transactions, while gemma4 was able to identify the first two transactions correctly, and then it quickly hallucinated.
 
-Implementing pre-LLM logic became unavoidable. For each statement type,parsing and cleanup must be performed, and then clean data can then be sent as text to the LLM. At a minimum, this adds some level of determinism to the process rather than expecting the LLM figure out statement formats and map vendors with no frame of reference.
+Instead, for each statement type, parsing and cleanup must be performed, and then clean data can then be sent as text to the LLM and the response can be requested as structured JSON. This works properly with both gemma4 and Clause, but when I enabled prompt caching in Claude, it decided to also summarize its decisions and appending the JSON response, requiring the response to be parsed.
 
 ## Requirements
 
@@ -53,9 +52,16 @@ Several options exist for the vector database, but the simplest was to enable th
 ```shell
 $ apt install postgresql-16-pgvector
 ```
+
+Once installed, the extension must be created:
+
 ```sql
 CREATE EXTENSION vector;
+```
 
+Adding a column to my merchant table is very convenient because the data becomes paired. Also note that traditional indexes (e.g. btree) cannot be used since we are measuring vector proximity using cosine, not ordered data:
+
+```sql
 ALTER TABLE entities ADD COLUMN embedding vector(768);
 
 CREATE INDEX ON entities USING hnsw (embedding vector_cosine_ops);
@@ -63,18 +69,13 @@ CREATE INDEX ON entities USING hnsw (embedding vector_cosine_ops);
 
 The reason for making the capacity 768 is due to the response of the embedding model:
 
+
 ```shell
 % curl -s http://llm:11434/api/embeddings -d '{"model": "nomic-embed-text", "prompt": "test"}' | jq '.embedding | length'
 768
 ```
 
-### misc
-Semantic search system
-
-Semantic understanding    ← nomic-embed-text (legit AI)  
-Similarity reasoning      ← pgvector cosine distance  
-Decision threshold        ← 0.80 rule
-
 ### TODO:
 - persist proper account
 - how do I prevent duplicate records on re-run?
+- create deserialization beans for each Kafka consumer
