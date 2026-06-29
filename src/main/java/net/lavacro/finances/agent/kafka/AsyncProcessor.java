@@ -1,6 +1,8 @@
 package net.lavacro.finances.agent.kafka;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.service.EmbedVectorService;
 import net.lavacro.finances.agent.workflow.ChatBot;
 import net.lavacro.finances.shared.proto.DecisionProto;
 import org.springframework.scheduling.annotation.Async;
@@ -8,12 +10,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class AsyncProcessor {
     private final ChatBot chatBot;
-
-    public AsyncProcessor(ChatBot chatBot) {
-        this.chatBot = chatBot;
-    }
+    private final EmbedVectorService embedVectorService;
 
     @Async
     public void process(String fileName, Integer accountId, byte[] payload) {
@@ -29,6 +29,7 @@ public class AsyncProcessor {
         log.info("original vendor name: {}", decisionModel.getOriginalVendorName());
         log.info("new vendor id: {}", decisionModel.getNewVendorId());
         log.info("new vendor name: {}", decisionModel.getNewVendorName());
+        embedVectorService.embedVendor(decisionModel);
     }
 }
 

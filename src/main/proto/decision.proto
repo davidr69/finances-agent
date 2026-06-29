@@ -6,8 +6,8 @@ option java_outer_classname = "DecisionProto";
 message DecisionMessage {
   enum Decision {
     UNKNOWN = 0;
-    ACCEPT_SUGGESTED = 1; // accepted LLM's vendor (existing or newly created)
-    CHANGE_TO_EXISTING = 2; // overrode LLM's new vendor with an existing one
+    USE_VECTOR = 1;
+    USE_LLM = 2;
   }
 
   Decision decision = 1;

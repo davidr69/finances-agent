@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.service.ActionService;
-import net.lavacro.finances.agent.service.EmbedVectorService;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
@@ -28,7 +27,6 @@ public class ChatBot {
 	private final ChatClient chatClient;
 	private final StatementParserFactory parserFactory;
 	private final VendorTool vendorTool;
-	private final EmbedVectorService embedVectorService;
 	private final ActionService actionService;
 
 	private static final int CHUNK_SIZE = 5;
@@ -40,13 +38,11 @@ public class ChatBot {
 			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
 			StatementParserFactory parserFactory,
 			VendorTool vendorTool,
-			EmbedVectorService embedVectorService,
 			ActionService actionService
 	) {
 		this.chatClient = ChatClient.builder(chatModel).build();
 		this.parserFactory = parserFactory;
 		this.vendorTool = vendorTool;
-		this.embedVectorService = embedVectorService;
 		this.actionService = actionService;
 	}
 
@@ -108,9 +104,6 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
-		// TODO: put this in feedback loop, per user's selection
-//		embedVectorService.embedAllVendors();;
-
 		String extracted;
 
 		try (
@@ -124,8 +117,7 @@ If you write anything else first, you have failed this task.
 			return;
 		}
 
-		// TODO: provide actual account ID
-		List<StmtTransaction> transactions = parserFactory.getParser(6).parseStatement(extracted);
+		List<StmtTransaction> transactions = parserFactory.getParser(account).parseStatement(extracted);
 		log.info("Parsed statement: {}", transactions.size());
 
 		transactions.forEach(item -> {
