@@ -24,10 +24,14 @@ public class EmbedVectorService {
 	private static final String GET_EXISTING_EMBEDDINGS = "SELECT id, description, bank_alias FROM entities WHERE embedding IS NOT NULL";
 
 	public void embedVendor(DecisionProto.DecisionMessage message) {
-		Map<String, Object> vendor = jdbcClient.sql(GET_ROW).param(message.getNewVendorId()).query().singleRow();
+		if(message.getDecision() == DecisionProto.DecisionMessage.Decision.REFRESH) {
+			embedAllVectors();
+		} else {
+			Map<String, Object> vendor = jdbcClient.sql(GET_ROW).param(message.getNewVendorId()).query().singleRow();
 
-		String concat = doEmbedding(vendor);
-		log.info("Embedded {} ({})", message.getNewVendorId(), concat);
+			String concat = doEmbedding(vendor);
+			log.info("Embedded {} ({})", message.getNewVendorId(), concat);
+		}
 	}
 
 	public void embedAllVectors() {
