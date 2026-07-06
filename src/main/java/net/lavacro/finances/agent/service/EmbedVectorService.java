@@ -4,6 +4,7 @@ import com.pgvector.PGvector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.shared.proto.DecisionProto;
+import org.intellij.lang.annotations.Language;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -20,8 +21,27 @@ public class EmbedVectorService {
 	private final JdbcTemplate jdbcTemplate;
 	private final JdbcClient jdbcClient;
 
-	private static final String GET_ROW = "SELECT id, description, bank_alias FROM entities WHERE id = ?";
-	private static final String GET_EXISTING_EMBEDDINGS = "SELECT id, description, bank_alias FROM entities WHERE embedding IS NOT NULL";
+	@Language("SQL")
+	private static final String GET_ROW = """
+		SELECT id, description, bank_alias
+		FROM entities
+		WHERE id = ?
+	""";
+
+	@Language("SQL")
+	private static final String GET_EXISTING_EMBEDDINGS = """
+		SELECT id, description, bank_alias
+		FROM entities
+		WHERE embedding IS NOT NULL
+		ORDER BY description
+	""";
+
+	@Language("SQL")
+	private static final String UPDATE_ONE_EMBEDDING = """
+		UPDATE entities
+		SET embedding = ?
+		WHERE id = ?
+	""";
 
 	public void embedVendor(DecisionProto.DecisionMessage message) {
 		if(message.getDecision() == DecisionProto.DecisionMessage.Decision.REFRESH) {
@@ -56,10 +76,7 @@ public class EmbedVectorService {
 
 		float[] vector = embeddingModel.embed(concat);
 
-		jdbcTemplate.update(
-				"UPDATE entities SET embedding = ? WHERE id = ?",
-				new PGvector(vector), id
-		);
+		jdbcTemplate.update(UPDATE_ONE_EMBEDDING, new PGvector(vector), id);
 		return concat;
 	}
 }
