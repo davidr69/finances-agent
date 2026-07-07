@@ -59,18 +59,5 @@ spring:
       client-id: 'finances-agent-consumer'
       fetch-min-size: 4096
       fetch-max-wait: 100
-      # Connection timeouts to prevent hanging in Kubernetes
-      session-timeout-ms: 10000
-      connections-max-idle-ms: 9000
-      request-timeout-ms: 30000
-      heartbeat-interval-ms: 3000
-      max-poll-interval-ms: 300000
-    properties:
-      # Reduce metadata refresh interval for faster failure detection
-      metadata.max.age.ms: 300000
-      # Timeout for initial bootstrap connection
-      bootstrap.servers.connect.timeout.ms: 10000
     listener:
       ack-mode: batch
-      # Poll timeout in milliseconds
-      poll-timeout: 3000
