@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'net.lavacro.finances-agent'
-version = '1.0.0'
+version = '1.0.1'
 
 def javaVersion = System.getProperty('os.arch') == 'aarch64' ? 26 : 25
 
