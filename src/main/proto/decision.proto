@@ -8,6 +8,7 @@ message DecisionMessage {
     UNKNOWN = 0;
     USE_VECTOR = 1;
     USE_LLM = 2;
+    REFRESH = -1;
   }
 
   Decision decision = 1;

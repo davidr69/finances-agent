@@ -81,7 +81,7 @@ class EmbedVendorsTest {
 
 	@Test
 	void embedVectorTest() {
-		embedVectorService.embedAllVendors();;
+		embedVectorService.embedAllVectors();;
 	}
 }
 

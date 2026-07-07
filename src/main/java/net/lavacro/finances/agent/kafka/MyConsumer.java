@@ -40,9 +40,8 @@ public class MyConsumer {
 			return;
 		}
 
-		Integer accountNumber = null;
 		try {
-			accountNumber = Integer.parseInt(accountId);
+			Integer accountNumber = Integer.parseInt(accountId);
 			asyncProcessor.process(filename, accountNumber, payload);
 		}  catch (NumberFormatException e) {
 			log.error("Invalid account id: {}", accountId);
