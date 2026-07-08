@@ -6,12 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.shared.proto.DecisionProto;
 import org.intellij.lang.annotations.Language;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -20,6 +22,7 @@ public class EmbedVectorService {
 	private final EmbeddingModel embeddingModel;
 	private final JdbcTemplate jdbcTemplate;
 	private final JdbcClient jdbcClient;
+	private final StringRedisTemplate redisTemplate;
 
 	@Language("SQL")
 	private static final String GET_ROW = """
@@ -56,13 +59,20 @@ public class EmbedVectorService {
 
 	public void embedAllVectors() {
 		log.info("Updating vectors ...");
-		List<Map<String, Object>> vendors = jdbcTemplate.queryForList(GET_EXISTING_EMBEDDINGS);
 
-		for (Map<String, Object> vendor : vendors) {
-			doEmbedding(vendor);
+		boolean canRefresh = redisTemplate.opsForValue().setIfAbsent("finances-agent-embedding", "active", 1L, TimeUnit.HOURS);
+
+		if(canRefresh) {
+			List<Map<String, Object>> vendors = jdbcTemplate.queryForList(GET_EXISTING_EMBEDDINGS);
+
+			for (Map<String, Object> vendor : vendors) {
+				doEmbedding(vendor);
+			}
+
+			log.info("Processed {} entities", vendors.size());
+		} else {
+			log.warn("Cannot refresh embedding due to lock");
 		}
-
-		log.info("Processed {} entities", vendors.size());
 	}
 
 	private String doEmbedding(Map<String, Object> entity) {
