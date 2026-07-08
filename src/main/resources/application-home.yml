@@ -1,0 +1,6 @@
+---
+spring:
+  data:
+    redis:
+      host: finances-redis-service
+      port: 6379

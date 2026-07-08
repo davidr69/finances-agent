@@ -6,9 +6,10 @@ plugins {
 }
 
 group = 'net.lavacro.finances-agent'
-version = '1.0.1'
+version = '1.1.0'
 
 def javaVersion = System.getProperty('os.arch') == 'aarch64' ? 26 : 25
+def osArch = System.getProperty('os.arch') == 'aarch64' ? 'osx-aarch_64' : 'osx-x86_64'
 
 java {
 	toolchain {
@@ -18,11 +19,12 @@ java {
 
 protobuf {
 	protoc {
-		artifact = 'com.google.protobuf:protoc:4.28.2'
+		artifact = "com.google.protobuf:protoc:4.28.2:${osArch}@exe"
 	}
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
 }
 
@@ -36,6 +38,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'	// for Netty
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'	// vector refresh mutex
 
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'	// for prototyping
 	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'		// production

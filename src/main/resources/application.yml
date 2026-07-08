@@ -15,6 +15,10 @@ spring:
   # datasource stuff (should really remove this and just use envars)
   datasource:
     url: jdbc:postgresql://prod-db:5432/finances
+  data:
+    redis:
+      repositories:
+        enabled: false
 
   # AI properties
   ai:
