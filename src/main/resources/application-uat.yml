@@ -1,0 +1,6 @@
+---
+spring:
+  data:
+    redis:
+      host: redis.lavacro.net
+      port: 6379
