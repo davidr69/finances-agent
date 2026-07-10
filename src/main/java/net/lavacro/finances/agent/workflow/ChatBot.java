@@ -122,12 +122,14 @@ If you write anything else first, you have failed this task.
 
 		transactions.forEach(item -> {
 			vendorTool.findVendor(item);
-			log.info("raw: {}, resolved: {}, id: {}", item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId());
+			log.info("raw: {}, resolved: {}, id: {}, score: {}",
+					item.getVendorRaw(), item.getVendorFromDb(), item.getVendorId(), item.getConfidence());
 		});
 
 		actionService.addToStagingTable(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
-				.toList()
+				.toList(),
+				account
 		);
 
 		List<StmtTransaction> needsValidation = transactions.stream()
@@ -173,7 +175,7 @@ If you write anything else first, you have failed this task.
 			log.info("Total tokens: {}", usage.getTotalTokens());
 			log.info("Native usage: {}", usage.getNativeUsage());
 
-			actionService.addToStagingTableUsingLlm(jsonResponse);
+			actionService.addToStagingTableUsingLlm(jsonResponse, account);
 		}
 	}
 }

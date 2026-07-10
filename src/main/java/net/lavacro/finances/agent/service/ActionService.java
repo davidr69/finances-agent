@@ -19,14 +19,14 @@ import java.util.List;
 public class ActionService {
 	private final ActionRepository actionRepository;
 
-	public void addToStagingTable(List<StmtTransaction> transactions) {
+	public void addToStagingTable(List<StmtTransaction> transactions, int accountId) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
 			ActionEntity entity = new ActionEntity();
 
 			entity.setEntity(transaction.getVendorId());
 			entity.setDescription(transaction.getVendorRaw());
-			entity.setAccount(6);
+			entity.setAccount(accountId);
 			entity.setAmount(transaction.getAmount());
 			entity.setMethod(11);
 			entity.setStatementOrder(transaction.getId());
@@ -41,7 +41,7 @@ public class ActionService {
 		log.info("Completed adding transactions");
 	}
 
-	public void addToStagingTableUsingLlm(String json) {
+	public void addToStagingTableUsingLlm(String json, int accountId) {
 		ObjectMapper mapper = new ObjectMapper();
 		List<StmtTransaction> transactions = null;
 		try {
@@ -50,7 +50,7 @@ public class ActionService {
 			log.error("Deserialization error: {}", e.getMessage(), e);
 		}
 		if(transactions != null) {
-			addToStagingTable(transactions);
+			addToStagingTable(transactions, accountId);
 		} else {
 			log.warn("No transactions found");
 		}

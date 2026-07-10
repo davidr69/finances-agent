@@ -13,4 +13,4 @@ ARG APP_VERSION="1.1.0"
 COPY --from=builder /build/build/libs/finances-agent-${APP_VERSION}.jar /app/finances-agent.jar
 WORKDIR /app
 USER nobody
-ENTRYPOINT ["/bin/sh", "-c", "java -jar finances-agent.jar"]
+ENTRYPOINT ["/bin/sh", "-c", "java -Xmx256M -Xss512K -jar finances-agent.jar"]
