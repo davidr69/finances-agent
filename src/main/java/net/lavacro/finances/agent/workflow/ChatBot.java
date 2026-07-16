@@ -121,7 +121,7 @@ If you write anything else first, you have failed this task.
 		try {
 			transactions = parserFactory.getParser(account).parseStatement(extracted, year);
 		} catch(IllegalArgumentException e) {
-			log.error("No parser available for account {}: {}", e.getMessage(), account, e);
+			log.error("No parser available for account {}: {}", account, e.getMessage());
 			return;
 		}
 		log.info("Parsed statement: {}", transactions.size());
