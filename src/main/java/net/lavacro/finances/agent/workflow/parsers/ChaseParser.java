@@ -44,6 +44,7 @@ public class ChaseParser implements StatementParser {
 		boolean started = false;
 		List<StmtTransaction> transactions = new ArrayList<>();
 		int lineNumber = 1;
+		String originalMonth = null;
 
 		for (String line : lines) {
 			if(started) {
@@ -52,6 +53,17 @@ public class ChaseParser implements StatementParser {
 				}
 				if(pattern.matcher(line).matches()) {
 					StmtTransaction transaction = new StmtTransaction();
+
+					String month = line.substring(0, 2);
+					if(originalMonth == null) {
+						originalMonth = month;
+					} else {
+						if(!month.equals(originalMonth)) {
+							// must have wrapped to next year
+							originalMonth = month;
+							year++;
+						}
+					}
 
 					int until = line.lastIndexOf(' ');
 					int from = line.lastIndexOf(' ', until - 1);
@@ -68,7 +80,9 @@ public class ChaseParser implements StatementParser {
 
 					transaction.setId(lineNumber++);
 					transaction.setAmount(amount);
-					transaction.setTransactionDate("2026-" + line.substring(0, 5).replace("/", "-"));
+					transaction.setTransactionDate(
+							String.format("%d-%s", year, line.substring(0, 5).replace("/", "-"))
+					);
 					transaction.setPostedDate(transaction.getTransactionDate());
 
 					line = line.substring(6, from);
