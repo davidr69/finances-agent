@@ -38,11 +38,12 @@ public class BankOfAmericaParser implements StatementParser {
 	 * From the remaining string, discard the last two fields.
 	 */
 	@Override
-	public List<StmtTransaction> parseStatement(String pdf) {
+	public List<StmtTransaction> parseStatement(String pdf, Integer year) {
 		log.info("Bank of America parser ...");
 		String[] lines = pdf.split("\n");
 		List<StmtTransaction> transactions = new ArrayList<>();
 		int lineNumber = 1;
+		String originalMonth = null;
 
 		for (String line : lines) {
 			if(pattern.matcher(line).matches()) {
@@ -64,9 +65,22 @@ public class BankOfAmericaParser implements StatementParser {
 					continue;
 				}
 
+				String month = line.substring(0, 2);
+				if(originalMonth == null) {
+					originalMonth = month;
+				} else {
+					if(!month.equals(originalMonth)) {
+						// must have wrapped to next year
+						originalMonth = month;
+						year++;
+					}
+				}
+
 				transaction.setId(lineNumber++);
 				transaction.setAmount(amount);
-				transaction.setTransactionDate("2026-" + line.substring(0, 5).replace("/", "-"));
+				transaction.setTransactionDate(
+						String.format("%d-%s", year, line.substring(0, 5).replace("/", "-"))
+				);
 				transaction.setPostedDate(transaction.getTransactionDate()); // faking it
 
 				line = line.substring(12, from);

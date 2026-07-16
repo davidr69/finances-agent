@@ -16,9 +16,9 @@ public class AsyncProcessor {
     private final EmbedVectorService embedVectorService;
 
     @Async
-    public void process(String fileName, Integer accountId, byte[] payload) {
+    public void process(String fileName, Integer accountId, Integer year, byte[] payload) {
         log.info("[async] processing file={} accountId={} payloadSize={}", fileName, accountId, payload == null ? 0 : payload.length);
-        chatBot.workflow(payload, accountId);
+        chatBot.workflow(payload, accountId, year);
     }
 
     @Async

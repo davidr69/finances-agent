@@ -31,6 +31,10 @@ public class MyConsumer {
 		String accountId = accountHeader != null ? new String(accountHeader.value(), StandardCharsets.UTF_8) : null;
 		log.info("account id: {}", accountId);
 
+		Header yearHeader = message.headers().lastHeader("year");
+		String year = yearHeader != null ? new String(yearHeader.value(), StandardCharsets.UTF_8) : null;
+		log.info("year: {}", year);
+
 		byte[] payload = message.value();
 
 		log.info("payload size: {}", payload.length);
@@ -40,9 +44,15 @@ public class MyConsumer {
 			return;
 		}
 
+		if(year == null) {
+			log.error("year is null");
+			return;
+		}
+
 		try {
 			Integer accountNumber = Integer.parseInt(accountId);
-			asyncProcessor.process(filename, accountNumber, payload);
+			Integer yearInt = Integer.parseInt(year);
+			asyncProcessor.process(filename, accountNumber, yearInt, payload);
 		}  catch (NumberFormatException e) {
 			log.error("Invalid account id: {}", accountId);
 		}
