@@ -117,7 +117,13 @@ If you write anything else first, you have failed this task.
 			return;
 		}
 
-		List<StmtTransaction> transactions = parserFactory.getParser(account).parseStatement(extracted);
+		List<StmtTransaction> transactions;
+		try {
+			transactions = parserFactory.getParser(account).parseStatement(extracted);
+		} catch(IllegalArgumentException e) {
+			log.error("No parser available for account {}: {}", e.getMessage(), account, e);
+			return;
+		}
 		log.info("Parsed statement: {}", transactions.size());
 
 		transactions.forEach(item -> {
