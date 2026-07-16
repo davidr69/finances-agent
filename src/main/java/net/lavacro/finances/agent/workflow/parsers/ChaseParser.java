@@ -38,7 +38,7 @@ public class ChaseParser implements StatementParser {
 	 * Rather than immediately split into tokens, we can first deal with substrings, and THEN tokenize the rest.
 	 */
 	@Override
-	public List<StmtTransaction> parseStatement(String pdf) {
+	public List<StmtTransaction> parseStatement(String pdf, Integer year) {
 		log.info("Parsing statement");
 		String[] lines = pdf.split("\n");
 		boolean started = false;

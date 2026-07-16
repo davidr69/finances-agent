@@ -38,7 +38,7 @@ public class BankOfAmericaParser implements StatementParser {
 	 * From the remaining string, discard the last two fields.
 	 */
 	@Override
-	public List<StmtTransaction> parseStatement(String pdf) {
+	public List<StmtTransaction> parseStatement(String pdf, Integer year) {
 		log.info("Bank of America parser ...");
 		String[] lines = pdf.split("\n");
 		List<StmtTransaction> transactions = new ArrayList<>();
