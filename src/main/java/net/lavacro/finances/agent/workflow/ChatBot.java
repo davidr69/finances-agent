@@ -46,7 +46,7 @@ public class ChatBot {
 		this.actionService = actionService;
 	}
 
-	public void workflow(byte[] pdf, int account) {
+	public void workflow(byte[] pdf, int account, int year) {
 		String instruction = """
 You are a vendor validation agent for a personal finance system.
 
@@ -117,7 +117,13 @@ If you write anything else first, you have failed this task.
 			return;
 		}
 
-		List<StmtTransaction> transactions = parserFactory.getParser(account).parseStatement(extracted);
+		List<StmtTransaction> transactions;
+		try {
+			transactions = parserFactory.getParser(account).parseStatement(extracted, year);
+		} catch(IllegalArgumentException e) {
+			log.error("No parser available for account {}: {}", account, e.getMessage());
+			return;
+		}
 		log.info("Parsed statement: {}", transactions.size());
 
 		transactions.forEach(item -> {
