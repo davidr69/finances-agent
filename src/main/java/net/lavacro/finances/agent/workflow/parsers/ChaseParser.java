@@ -58,7 +58,7 @@ public class ChaseParser implements StatementParser {
 					if(originalMonth == null) {
 						originalMonth = month;
 					} else {
-						if(!month.equals(originalMonth)) {
+						if(!month.equals(originalMonth) && "01".equals(month)) {
 							// must have wrapped to next year
 							originalMonth = month;
 							year++;
