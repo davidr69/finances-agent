@@ -47,7 +47,8 @@ public class ActionService {
 		try {
 			transactions = mapper.readValue(json.getBytes(StandardCharsets.UTF_8), new TypeReference<>(){});
 		} catch(Exception e) {
-			log.error("Deserialization error: {}", e.getMessage(), e);
+			log.error("Deserialization error: {}", e.getMessage());
+			log.warn("Deserialization source: {}", json);
 		}
 		if(transactions != null) {
 			addToStagingTable(transactions, accountId);

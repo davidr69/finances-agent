@@ -78,6 +78,16 @@ Example input entry:
 Example output entry:
 {"confidence":0.76,"amount":-32.48,"posted_date":"2026-04-17","transaction_date":"2026-04-17","vendor_from_stmt":"Shoprite Hylan Plaza","vendor_from_db":"United Artists Hylan Plaza","vendor_id":303,"vendor_from_llm":57}
 
+Note the data types for the fields:
+- confidence: floating point
+- amount: floating point (to 2 decimal places)
+- posted_date: yyyy-mm-dd
+- transaction_date: yyyy-mm-dd
+- vendor_from_stmt: text
+- vendor_from_db: text
+- vendor_id: numeric (obtained via tool)
+- vendor_from_llm: numeric (obtained via tool)
+
 CRITICAL: Your response must start with [ and end with ]
 Do not write any text before or after the JSON array.
 Do not use markdown. Do not summarize. Do not explain your reasoning.

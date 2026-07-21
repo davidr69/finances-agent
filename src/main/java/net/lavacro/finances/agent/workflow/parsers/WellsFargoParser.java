@@ -12,8 +12,9 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class BankOfAmericaParser implements StatementParser {
-	private static final Pattern pattern = Pattern.compile("^\\d{2}/\\d{2} .*");
+public class WellsFargoParser implements StatementParser {
+	private static final Pattern pattern = Pattern.compile("^(\\d{4}\\s+)?\\d{2}/\\d{2} .*");
+	private static final Pattern cardTransaction = Pattern.compile("^\\d{4}\\s.*");
 	private static final NumberFormat format = NumberFormat.getInstance(Locale.US);
 
 	/**
@@ -23,31 +24,37 @@ public class BankOfAmericaParser implements StatementParser {
 	 * @return A list of transactions objects
 	 * <br/>
 	 * This parser is very straight-forward. All transactions conform to a common format, whether an expense or payment:
-	 * 		12/26 12/26 BA ELECTRONIC PAYMENT 1234 9876 -321.62
-	 * 		12/15 12/16 EXXON KINGS PORT RICHM   STATEN ISLANDNY 1122 9876 45.67
-	 * 		12/23 12/24 BP#6634117NEW SPRINGVILL STATEN ISLANDNY 3344 9876 56.78
+	 * 		12/26 12/26 1234567890ABCDEFG ONLINE ACH PAYMENT        THANK YOU 123.45
+	 * 		1234 12/14 12/14 1234567890ABCDEFG AMAZON MKTPL*A1B2C3D4E Amzn.com/bill WA 98.25
+	 * 		1234 12/17 12/17 9876543210ZYXWVUT AMAZON MKTPL*5F6G7H9I0 Amzn.com/bill WA 88.44
 	 * The fields are:
+	 * - Card Ending In
 	 * - transaction date
 	 * - posted date
-	 * - vendor/activty
-	 * - location
-	 * - transaction id?
-	 * - end of card number
+	 * - reference number
+	 * - description
 	 * - amount
 	 * The strategy would be to use the first field, discard the second, use the last field.
 	 * From the remaining string, discard the last two fields.
 	 */
 	@Override
 	public List<StmtTransaction> parseStatement(String pdf, Integer year) {
-		log.info("Bank of America parser ...");
+		log.info("Wells Fargo parser ...");
 		String[] lines = pdf.split("\n");
 		List<StmtTransaction> transactions = new ArrayList<>();
 		int lineNumber = 1;
 		String originalMonth = null;
+		BigDecimal minusOne = new BigDecimal("-1");
 
 		for (String line : lines) {
 			if(pattern.matcher(line).matches()) {
 				StmtTransaction transaction = new StmtTransaction();
+
+				boolean isDebit = false;
+				if(cardTransaction.matcher(line).matches()) {
+					line = line.substring(5);
+					isDebit = true;
+				}
 
 				int from = line.lastIndexOf(' ');
 
@@ -55,7 +62,11 @@ public class BankOfAmericaParser implements StatementParser {
 				BigDecimal amount;
 				try {
 					Number number = format.parse(line.substring(from + 1));
-					amount = new BigDecimal(number.toString()).multiply(new BigDecimal("-1"));
+					amount = new BigDecimal(number.toString());
+					if(isDebit) {
+						amount = amount.multiply(minusOne);
+
+					}
 				} catch(ParseException e) {
 					log.error("Unable to parse amount", e);
 					amount = BigDecimal.ZERO;
@@ -78,22 +89,16 @@ public class BankOfAmericaParser implements StatementParser {
 						String.format("%d-%s", actionYear, line.substring(0, 5).replace("/", "-"))
 				);
 				transaction.setPostedDate(transaction.getTransactionDate()); // faking it
-
-				line = line.substring(12, from);
-				// now have "EXXON KINGS PORT RICHM   STATEN ISLANDNY 1122 9876"
-				extractValues(transaction, line);
+				transaction.setVendorRaw(line.substring(30, from));
 
 				transactions.add(transaction);
 				log.info("date: {}, amount: {}, desc: {}", transaction.getTransactionDate(), amount, transaction.getVendorRaw());
+
+				log.info(line);
 			}
 		}
 
 		log.info("Parsed {} transactions in statement", transactions.size());
 		return transactions;
-	}
-
-	private void extractValues(StmtTransaction transaction, String line) {
-		// line is something like "EXXON KINGS PORT RICHM   STATEN ISLANDNY 1122 9876"
-		transaction.setVendorRaw(line.substring(0, line.substring(0, line.lastIndexOf(' ')).lastIndexOf(' ')));
 	}
 }
