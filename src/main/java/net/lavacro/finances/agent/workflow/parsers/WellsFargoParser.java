@@ -72,18 +72,14 @@ public class WellsFargoParser implements StatementParser {
 				String month = line.substring(0, 2);
 				if(originalMonth == null) {
 					originalMonth = month;
-				} else {
-					if(!month.equals(originalMonth) && "01".equals(month)) {
-						// must have wrapped to next year
-						originalMonth = month;
-						year++;
-					}
 				}
+
+				int actionYear = !month.equals(originalMonth) && "01".equals(month) ? year + 1 : year;
 
 				transaction.setId(lineNumber++);
 				transaction.setAmount(amount);
 				transaction.setTransactionDate(
-						String.format("%d-%s", year, line.substring(0, 5).replace("/", "-"))
+						String.format("%d-%s", actionYear, line.substring(0, 5).replace("/", "-"))
 				);
 				transaction.setPostedDate(transaction.getTransactionDate()); // faking it
 				transaction.setVendorRaw(line.substring(30, from));
