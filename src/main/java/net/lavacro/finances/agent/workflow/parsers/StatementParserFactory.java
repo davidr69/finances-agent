@@ -13,7 +13,7 @@ public class StatementParserFactory {
 	private final Map<Integer, StatementParser> parsers = Map.of(
 			6, new ChaseParser(),
 			21, new BankOfAmericaParser(),
-			22, new ChaseParser() 		// WF
+			9, new WellsFargoParser()
 	);
 
 	public StatementParser getParser(int accountId) {
