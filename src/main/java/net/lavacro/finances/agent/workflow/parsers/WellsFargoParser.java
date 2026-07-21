@@ -44,13 +44,16 @@ public class WellsFargoParser implements StatementParser {
 		List<StmtTransaction> transactions = new ArrayList<>();
 		int lineNumber = 1;
 		String originalMonth = null;
+		BigDecimal minusOne = new BigDecimal("-1");
 
 		for (String line : lines) {
 			if(pattern.matcher(line).matches()) {
 				StmtTransaction transaction = new StmtTransaction();
 
+				boolean isDebit = false;
 				if(cardTransaction.matcher(line).matches()) {
 					line = line.substring(5);
+					isDebit = true;
 				}
 
 				int from = line.lastIndexOf(' ');
@@ -59,7 +62,11 @@ public class WellsFargoParser implements StatementParser {
 				BigDecimal amount;
 				try {
 					Number number = format.parse(line.substring(from + 1));
-					amount = new BigDecimal(number.toString()).multiply(new BigDecimal("-1"));
+					amount = new BigDecimal(number.toString());
+					if(isDebit) {
+						amount = amount.multiply(minusOne);
+
+					}
 				} catch(ParseException e) {
 					log.error("Unable to parse amount", e);
 					amount = BigDecimal.ZERO;
