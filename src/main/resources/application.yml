@@ -23,7 +23,6 @@ spring:
   # AI properties
   ai:
     anthropic:
-      api-key: '${ANTHROPIC_API_KEY}'
       chat:
         model: claude-sonnet-4-6
         max-tokens: 8192
@@ -31,7 +30,6 @@ spring:
           strategy: SYSTEM_ONLY
     google:
       genai:
-        api-key: '${GEMINI_API_KEY}'
         chat:
           model: 'gemini-3.5-flash'
     ollama:

@@ -55,13 +55,13 @@ public class ChaseParser implements StatementParser {
 					StmtTransaction transaction = new StmtTransaction();
 
 					String month = line.substring(0, 2);
+					int newYear = year;
 					if(originalMonth == null) {
 						originalMonth = month;
 					} else {
-						if(!month.equals(originalMonth) && "01".equals(month)) {
+						if("12".equals(originalMonth) && "01".equals(month)) {
 							// must have wrapped to next year
-							originalMonth = month;
-							year++;
+							newYear++;
 						}
 					}
 
@@ -81,7 +81,7 @@ public class ChaseParser implements StatementParser {
 					transaction.setId(lineNumber++);
 					transaction.setAmount(amount);
 					transaction.setTransactionDate(
-							String.format("%d-%s", year, line.substring(0, 5).replace("/", "-"))
+							String.format("%d-%s", newYear, line.substring(0, 5).replace("/", "-"))
 					);
 					transaction.setPostedDate(transaction.getTransactionDate());
 
