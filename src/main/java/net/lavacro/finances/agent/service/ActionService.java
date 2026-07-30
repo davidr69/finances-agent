@@ -2,9 +2,12 @@ package net.lavacro.finances.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.entities.ActionEntity;
 import net.lavacro.finances.agent.repositories.ActionRepository;
+import net.lavacro.finances.agent.config.ThreadLocalContext;
+
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,7 +22,7 @@ import java.util.List;
 public class ActionService {
 	private final ActionRepository actionRepository;
 
-	public void addToStagingTable(List<StmtTransaction> transactions, int accountId, String statementGroup) {
+	public void addToStagingTable(List<StmtTransaction> transactions, int accountId) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
 			ActionEntity entity = new ActionEntity();
@@ -31,7 +34,7 @@ public class ActionService {
 			entity.setMethod(11);
 			entity.setStatementOrder(transaction.getId());
 			entity.setLlmEntity(transaction.getVendorFromLlm());
-			entity.setStatementGroup(statementGroup);
+			entity.setStatementGroup(ThreadLocalContext.getStatementBatch());
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
@@ -42,7 +45,7 @@ public class ActionService {
 		log.info("Completed adding transactions");
 	}
 
-	public void addToStagingTableUsingLlm(String json, int accountId, String statementGroup) {
+	public void addToStagingTableUsingLlm(String json, int accountId) {
 		ObjectMapper mapper = new ObjectMapper();
 		List<StmtTransaction> transactions = null;
 		try {
@@ -52,7 +55,7 @@ public class ActionService {
 			log.warn("Deserialization source: {}", json);
 		}
 		if(transactions != null) {
-			addToStagingTable(transactions, accountId, statementGroup);
+			addToStagingTable(transactions, accountId);
 		} else {
 			log.warn("No transactions found");
 		}

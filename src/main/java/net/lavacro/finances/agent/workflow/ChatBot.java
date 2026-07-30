@@ -3,9 +3,12 @@ package net.lavacro.finances.agent.workflow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.service.ActionService;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
+import net.lavacro.finances.agent.config.ThreadLocalContext;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -98,7 +101,6 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
-	private String statementBatch;
 
 	// TODO: allow the LLM to be specified via Spring resolvers
 	public ChatBot(
@@ -146,8 +148,11 @@ If you write anything else first, you have failed this task.
 		// this might not be the first actual transaction (in terms of date) in the billing/statement period since
 		// payments might be listed before purchases, but it is the deterministic identifier for the statement because
 		// it will always be the first for the statement
-		statementBatch = transactions.getFirst().getTransactionDate().substring(0, 7);
+		String statementBatch = transactions.getFirst().getTransactionDate().substring(0, 7);
 		log.info("Statement batch: {}", statementBatch);
+
+		// I don't want to pass this around repeatedly, so store it in a thread-local
+		ThreadLocalContext.setStatementBatch(statementBatch);
 
 		// has this statement already been imported and unmerged entries still exist?
 		if(actionService.hasUnmergedEntries(account, statementBatch)) {
@@ -164,8 +169,7 @@ If you write anything else first, you have failed this task.
 		actionService.addToStagingTable(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
 				.toList(),
-				account,
-				statementBatch
+				account
 		);
 
 		List<StmtTransaction> needsValidation = transactions.stream()
@@ -175,6 +179,8 @@ If you write anything else first, you have failed this task.
 		if(!needsValidation.isEmpty()) {
 			sendToLlm(account, needsValidation);
 		}
+
+		ThreadLocalContext.clearStatementBatch();
 	}
 
 	private void sendToLlm(int account, List<StmtTransaction> needsValidation) {
@@ -217,7 +223,7 @@ If you write anything else first, you have failed this task.
 			log.info("Total tokens: {}", usage.getTotalTokens());
 			log.info("Native usage: {}", usage.getNativeUsage());
 
-			actionService.addToStagingTableUsingLlm(jsonResponse, account, statementBatch);
+			actionService.addToStagingTableUsingLlm(jsonResponse, account);
 		}
 	}
 }
