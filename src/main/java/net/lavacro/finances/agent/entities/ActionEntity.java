@@ -29,4 +29,7 @@ public class ActionEntity {
 
 	@Column(name = "llm_entity")
 	private Integer llmEntity;
+
+	@Column(name = "statement_group")
+	private String statementGroup;
 }

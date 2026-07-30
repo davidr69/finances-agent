@@ -98,6 +98,7 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
+	private String statementBatch;
 
 	// TODO: allow the LLM to be specified via Spring resolvers
 	public ChatBot(
@@ -137,6 +138,18 @@ If you write anything else first, you have failed this task.
 		}
 		log.info("Parsed statement: {}", transactions.size());
 
+		// this might not be the first actual transaction (in terms of date) in the billing/statement period since
+		// payments might be listed before purchases, but it is the deterministic identifier for the statement because
+		// it will always be the first for the statement
+		statementBatch = transactions.getFirst().getTransactionDate().substring(0, 7);
+		log.info("Statement batch: {}", statementBatch);
+
+		// has this statement already been imported and unmerged entries still exist?
+		if(actionService.hasUnmergedEntries(account, statementBatch)) {
+			log.warn("Statement already imported and not fully merged");
+			return;
+		}
+
 		transactions.forEach(item -> {
 			vendorTool.findVendor(item);
 			log.info("raw: {}, resolved: {}, id: {}, score: {}",
@@ -146,14 +159,17 @@ If you write anything else first, you have failed this task.
 		actionService.addToStagingTable(transactions.stream()
 				.filter(m -> m.getConfidence() >= 0.80)
 				.toList(),
-				account
+				account,
+				statementBatch
 		);
 
 		List<StmtTransaction> needsValidation = transactions.stream()
 				.filter(m -> m.getConfidence() < 0.80)
 				.toList();
 
-		sendToLlm(account, needsValidation);
+		if(!needsValidation.isEmpty()) {
+			sendToLlm(account, needsValidation);
+		}
 	}
 
 	private void sendToLlm(int account, List<StmtTransaction> needsValidation) {
@@ -196,7 +212,7 @@ If you write anything else first, you have failed this task.
 			log.info("Total tokens: {}", usage.getTotalTokens());
 			log.info("Native usage: {}", usage.getNativeUsage());
 
-			actionService.addToStagingTableUsingLlm(jsonResponse, account);
+			actionService.addToStagingTableUsingLlm(jsonResponse, account, statementBatch);
 		}
 	}
 }

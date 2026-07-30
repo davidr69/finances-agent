@@ -19,7 +19,7 @@ import java.util.List;
 public class ActionService {
 	private final ActionRepository actionRepository;
 
-	public void addToStagingTable(List<StmtTransaction> transactions, int accountId) {
+	public void addToStagingTable(List<StmtTransaction> transactions, int accountId, String statementGroup) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
 			ActionEntity entity = new ActionEntity();
@@ -31,6 +31,7 @@ public class ActionService {
 			entity.setMethod(11);
 			entity.setStatementOrder(transaction.getId());
 			entity.setLlmEntity(transaction.getVendorFromLlm());
+			entity.setStatementGroup(statementGroup);
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
@@ -41,7 +42,7 @@ public class ActionService {
 		log.info("Completed adding transactions");
 	}
 
-	public void addToStagingTableUsingLlm(String json, int accountId) {
+	public void addToStagingTableUsingLlm(String json, int accountId, String statementGroup) {
 		ObjectMapper mapper = new ObjectMapper();
 		List<StmtTransaction> transactions = null;
 		try {
@@ -51,9 +52,13 @@ public class ActionService {
 			log.warn("Deserialization source: {}", json);
 		}
 		if(transactions != null) {
-			addToStagingTable(transactions, accountId);
+			addToStagingTable(transactions, accountId, statementGroup);
 		} else {
 			log.warn("No transactions found");
 		}
+	}
+
+	public boolean hasUnmergedEntries(int account, String statementGroup) {
+		return actionRepository.existsByAccountAndStatementGroup(account, statementGroup);
 	}
 }
