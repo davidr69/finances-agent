@@ -31,23 +31,7 @@ public class ChatBot {
 
 	private static final int CHUNK_SIZE = 5;
 
-	// TODO: allow the LLM to be specified via Spring resolvers
-	public ChatBot(
-//			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
-//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
-			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
-			StatementParserFactory parserFactory,
-			VendorTool vendorTool,
-			ActionService actionService
-	) {
-		this.chatClient = ChatClient.builder(chatModel).build();
-		this.parserFactory = parserFactory;
-		this.vendorTool = vendorTool;
-		this.actionService = actionService;
-	}
-
-	public void workflow(byte[] pdf, int account, int year) {
-		String instruction = """
+	private static final String PROMPT = """
 You are a vendor validation agent for a personal finance system.
 
 You will receive a JSON array of low-confidence vendor matches from a bank statement.
@@ -114,6 +98,23 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
+
+	// TODO: allow the LLM to be specified via Spring resolvers
+	public ChatBot(
+//			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
+//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
+			StatementParserFactory parserFactory,
+			VendorTool vendorTool,
+			ActionService actionService
+	) {
+		this.chatClient = ChatClient.builder(chatModel).build();
+		this.parserFactory = parserFactory;
+		this.vendorTool = vendorTool;
+		this.actionService = actionService;
+	}
+
+	public void workflow(byte[] pdf, int account, int year) {
 		String extracted;
 
 		try (
@@ -152,6 +153,10 @@ If you write anything else first, you have failed this task.
 				.filter(m -> m.getConfidence() < 0.80)
 				.toList();
 
+		sendToLlm(account, needsValidation);
+	}
+
+	private void sendToLlm(int account, List<StmtTransaction> needsValidation) {
 		ObjectMapper mapper = new ObjectMapper();
 		String json;
 
@@ -167,7 +172,7 @@ If you write anything else first, you have failed this task.
 
 			log.info("Validating ...");
 			ChatResponse response = chatClient.prompt()
-					.system(instruction)
+					.system(PROMPT)
 					.user(json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].")
 					.tools(vendorTool)
 					.call()
