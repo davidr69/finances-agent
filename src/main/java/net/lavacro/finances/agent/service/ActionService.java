@@ -2,9 +2,12 @@ package net.lavacro.finances.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.entities.ActionEntity;
 import net.lavacro.finances.agent.repositories.ActionRepository;
+import net.lavacro.finances.agent.config.ThreadLocalContext;
+
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,6 +34,7 @@ public class ActionService {
 			entity.setMethod(11);
 			entity.setStatementOrder(transaction.getId());
 			entity.setLlmEntity(transaction.getVendorFromLlm());
+			entity.setStatementGroup(ThreadLocalContext.getStatementBatch());
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
@@ -55,5 +59,9 @@ public class ActionService {
 		} else {
 			log.warn("No transactions found");
 		}
+	}
+
+	public boolean hasUnmergedEntries(int account, String statementGroup) {
+		return actionRepository.existsByAccountAndStatementGroup(account, statementGroup);
 	}
 }
