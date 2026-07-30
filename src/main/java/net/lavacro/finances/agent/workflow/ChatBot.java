@@ -152,6 +152,7 @@ If you write anything else first, you have failed this task.
 		log.info("Statement batch: {}", statementBatch);
 
 		// I don't want to pass this around repeatedly, so store it in a thread-local
+		ThreadLocalContext.clearStatementBatch();
 		ThreadLocalContext.setStatementBatch(statementBatch);
 
 		// has this statement already been imported and unmerged entries still exist?
