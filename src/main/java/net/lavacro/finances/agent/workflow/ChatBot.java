@@ -138,6 +138,11 @@ If you write anything else first, you have failed this task.
 		}
 		log.info("Parsed statement: {}", transactions.size());
 
+		if(transactions.isEmpty()) {
+			log.warn("No transactions parsed from statement");
+			return;
+		}
+
 		// this might not be the first actual transaction (in terms of date) in the billing/statement period since
 		// payments might be listed before purchases, but it is the deterministic identifier for the statement because
 		// it will always be the first for the statement
