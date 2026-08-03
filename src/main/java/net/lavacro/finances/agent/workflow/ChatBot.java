@@ -3,9 +3,12 @@ package net.lavacro.finances.agent.workflow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+
 import net.lavacro.finances.agent.dto.StmtTransaction;
 import net.lavacro.finances.agent.service.ActionService;
 import net.lavacro.finances.agent.workflow.parsers.StatementParserFactory;
+import net.lavacro.finances.agent.config.ThreadLocalContext;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -31,23 +34,7 @@ public class ChatBot {
 
 	private static final int CHUNK_SIZE = 5;
 
-	// TODO: allow the LLM to be specified via Spring resolvers
-	public ChatBot(
-//			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
-//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
-			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
-			StatementParserFactory parserFactory,
-			VendorTool vendorTool,
-			ActionService actionService
-	) {
-		this.chatClient = ChatClient.builder(chatModel).build();
-		this.parserFactory = parserFactory;
-		this.vendorTool = vendorTool;
-		this.actionService = actionService;
-	}
-
-	public void workflow(byte[] pdf, int account, int year) {
-		String instruction = """
+	private static final String PROMPT = """
 You are a vendor validation agent for a personal finance system.
 
 You will receive a JSON array of low-confidence vendor matches from a bank statement.
@@ -114,6 +101,23 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
+
+	// TODO: allow the LLM to be specified via Spring resolvers
+	public ChatBot(
+//			@Qualifier(value = "googleGenAiChatModel") ChatModel chatModel,
+//			@Qualifier(value = "ollamaChatModel") ChatModel chatModel,
+			@Qualifier(value = "anthropicChatModel") ChatModel chatModel,
+			StatementParserFactory parserFactory,
+			VendorTool vendorTool,
+			ActionService actionService
+	) {
+		this.chatClient = ChatClient.builder(chatModel).build();
+		this.parserFactory = parserFactory;
+		this.vendorTool = vendorTool;
+		this.actionService = actionService;
+	}
+
+	public void workflow(byte[] pdf, int account, int year) {
 		String extracted;
 
 		try (
@@ -136,6 +140,27 @@ If you write anything else first, you have failed this task.
 		}
 		log.info("Parsed statement: {}", transactions.size());
 
+		if(transactions.isEmpty()) {
+			log.warn("No transactions parsed from statement");
+			return;
+		}
+
+		// this might not be the first actual transaction (in terms of date) in the billing/statement period since
+		// payments might be listed before purchases, but it is the deterministic identifier for the statement because
+		// it will always be the first for the statement
+		String statementBatch = transactions.getFirst().getTransactionDate().substring(0, 7);
+		log.info("Statement batch: {}", statementBatch);
+
+		// I don't want to pass this around repeatedly, so store it in a thread-local
+		ThreadLocalContext.clearStatementBatch();
+		ThreadLocalContext.setStatementBatch(statementBatch);
+
+		// has this statement already been imported and unmerged entries still exist?
+		if(actionService.hasUnmergedEntries(account, statementBatch)) {
+			log.warn("Statement already imported and not fully merged");
+			return;
+		}
+
 		transactions.forEach(item -> {
 			vendorTool.findVendor(item);
 			log.info("raw: {}, resolved: {}, id: {}, score: {}",
@@ -152,6 +177,14 @@ If you write anything else first, you have failed this task.
 				.filter(m -> m.getConfidence() < 0.80)
 				.toList();
 
+		if(!needsValidation.isEmpty()) {
+			sendToLlm(account, needsValidation);
+		}
+
+		ThreadLocalContext.clearStatementBatch();
+	}
+
+	private void sendToLlm(int account, List<StmtTransaction> needsValidation) {
 		ObjectMapper mapper = new ObjectMapper();
 		String json;
 
@@ -167,7 +200,7 @@ If you write anything else first, you have failed this task.
 
 			log.info("Validating ...");
 			ChatResponse response = chatClient.prompt()
-					.system(instruction)
+					.system(PROMPT)
 					.user(json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].")
 					.tools(vendorTool)
 					.call()
