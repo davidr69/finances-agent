@@ -59,7 +59,11 @@ spring:
       max-poll-records: 500
       enable-auto-commit: true
       client-id: 'finances-agent-consumer'
-      fetch-min-size: 4096
-      fetch-max-wait: 100
+      fetch-min-size: 1
+      fetch-max-wait: 5s
+      properties:
+        max.poll.interval.ms: 300000
     listener:
       ack-mode: batch
+      poll-timeout: 5s
+      idle-between-polls: 3s
