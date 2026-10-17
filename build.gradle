@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'net.lavacro.finances-agent'
-version = '1.2.0'
+version = '1.2.1'
 
 def javaVersion = System.getProperty('os.arch') == 'aarch64' ? 26 : 25
 def osArch = System.getProperty('os.arch') == 'aarch64' ? 'osx-aarch_64' : 'linux-x86_64'
@@ -42,13 +42,13 @@ dependencies {
 
 	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'	// for prototyping
 	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'		// production
-	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+//	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 	implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
 //	implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
 	implementation 'org.springframework.ai:spring-ai-vector-store-advisor'
 
-	implementation 'org.postgresql:postgresql:42.7.7'
+	implementation 'org.postgresql:postgresql:42.7.14'
 
 	implementation 'org.apache.pdfbox:pdfbox:3.0.7'
 
