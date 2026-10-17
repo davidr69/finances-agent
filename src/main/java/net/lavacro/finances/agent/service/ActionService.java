@@ -24,16 +24,14 @@ public class ActionService {
 
 	@Language("SQL")
 	private static final String INSERT_STAGING = """
-	INSERT INTO staging.action (entity, description, account, amount, method, statement_order, llm_entity, statement_group, mydate)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO staging.action (entity, description, account, amount, method, statement_order, llm_entity, statement_group, mydate)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	""";
 
 	@Language("SQL")
 	private static final String HAS_UNMERGED = """
-	SELECT EXISTS (
-		SELECT 1 FROM staging.action
+		SELECT DISTINCT(1) FROM staging.action
 		WHERE account = ? AND statement_group = ?
-	) AS has_unmerged
 	""";
 
 	public void addToStagingTable(List<StmtTransaction> transactions, int accountId) {
@@ -75,11 +73,10 @@ public class ActionService {
 	}
 
 	public boolean hasUnmergedEntries(int account, String statementGroup) {
-		return jdbcClient.sql(HAS_UNMERGED)
+		return !jdbcClient.sql(HAS_UNMERGED)
 				.param(account)
 				.param(statementGroup)
 				.query()
-				.queryRow()
-				.get("has_unmerged", Boolean.class);
+				.singleRow().isEmpty();
 	}
 }
