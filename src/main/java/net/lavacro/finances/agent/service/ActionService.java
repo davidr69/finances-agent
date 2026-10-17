@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import net.lavacro.finances.agent.dto.StmtTransaction;
-import net.lavacro.finances.agent.entities.ActionEntity;
-import net.lavacro.finances.agent.repositories.ActionRepository;
 import net.lavacro.finances.agent.config.ThreadLocalContext;
 
+import org.intellij.lang.annotations.Language;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,27 +20,40 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ActionService {
-	private final ActionRepository actionRepository;
+	private final JdbcClient jdbcClient;
+
+	@Language("SQL")
+	private static final String INSERT_STAGING = """
+	INSERT INTO staging.action (entity, description, account, amount, method, statement_order, llm_entity, statement_group, mydate)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	""";
+
+	@Language("SQL")
+	private static final String HAS_UNMERGED = """
+	SELECT EXISTS (
+		SELECT 1 FROM staging.action
+		WHERE account = ? AND statement_group = ?
+	) AS has_unmerged
+	""";
 
 	public void addToStagingTable(List<StmtTransaction> transactions, int accountId) {
 		log.info("Adding transactions to staging table: {}", transactions.size());
 		for(StmtTransaction transaction : transactions) {
-			ActionEntity entity = new ActionEntity();
-
-			entity.setEntity(transaction.getVendorId());
-			entity.setDescription(transaction.getVendorRaw());
-			entity.setAccount(accountId);
-			entity.setAmount(transaction.getAmount());
-			entity.setMethod(11);
-			entity.setStatementOrder(transaction.getId());
-			entity.setLlmEntity(transaction.getVendorFromLlm());
-			entity.setStatementGroup(ThreadLocalContext.getStatementBatch());
 
 			String[] dateParts = transaction.getTransactionDate().split("-");
 			LocalDate ld = LocalDate.of(Integer.parseInt(dateParts[0]), Integer.parseInt(dateParts[1]), Integer.parseInt(dateParts[2]));
-			entity.setMydate(ld);
 
-			actionRepository.save(entity);
+			jdbcClient.sql(INSERT_STAGING)
+					.param(transaction.getVendorId())
+					.param(transaction.getVendorRaw())
+					.param(accountId)
+					.param(transaction.getAmount())
+					.param(11L)
+					.param(transaction.getId())
+					.param(transaction.getVendorFromLlm())
+					.param(ThreadLocalContext.getStatementBatch())
+					.param(ld)
+					.update();
 		}
 		log.info("Completed adding transactions");
 	}
@@ -62,6 +75,11 @@ public class ActionService {
 	}
 
 	public boolean hasUnmergedEntries(int account, String statementGroup) {
-		return actionRepository.existsByAccountAndStatementGroup(account, statementGroup);
+		return jdbcClient.sql(HAS_UNMERGED)
+				.param(account)
+				.param(statementGroup)
+				.query()
+				.queryRow()
+				.get("has_unmerged", Boolean.class);
 	}
 }
