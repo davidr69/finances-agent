@@ -55,9 +55,9 @@ dependencies {
 	// for decision topic
 	implementation 'com.google.protobuf:protobuf-java:4.28.2'
 
-	compileOnly 'org.projectlombok:lombok:1.18.42'
+	compileOnly 'org.projectlombok:lombok:1.18.48'
 	compileOnly 'org.jetbrains:annotations:24.1.0'
-	annotationProcessor 'org.projectlombok:lombok:1.18.42'
+	annotationProcessor 'org.projectlombok:lombok:1.18.48'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
