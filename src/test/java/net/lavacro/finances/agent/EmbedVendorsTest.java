@@ -1,6 +1,7 @@
 package net.lavacro.finances.agent;
 
 import com.pgvector.PGvector;
+import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.service.EmbedVectorService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @SpringBootTest
+@Slf4j
 class EmbedVendorsTest {
 
 	@Autowired
@@ -42,7 +44,7 @@ class EmbedVendorsTest {
 		};
 
 		for (String vendor : vendors) {
-			IO.println("Querying for: " + vendor);
+			log.info("Querying for: " + vendor);
 			findSimilarVendor(vendor);
 		}
 	}
@@ -61,7 +63,7 @@ class EmbedVendorsTest {
 		);
 
 		if (results.isEmpty()) {
-			IO.println("No vendors found");
+			log.info("No vendors found");
 			return;
 		}
 
@@ -75,7 +77,7 @@ class EmbedVendorsTest {
 		));
 
 		resp.ifPresent(vendorMatch ->
-				IO.println(vendorMatch.toString() + ", confident: " + vendorMatch.isConfident() + "\n")
+				log.info(vendorMatch.toString() + ", confident: " + vendorMatch.isConfident() + "\n")
 		);
 	}
 
