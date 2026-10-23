@@ -30,7 +30,8 @@ public class ActionService {
 
 	@Language("SQL")
 	private static final String HAS_UNMERGED = """
-		SELECT DISTINCT(1) FROM staging.action
+		SELECT COUNT(*) AS num
+		FROM staging.action
 		WHERE account = ? AND statement_group = ?
 	""";
 
@@ -73,10 +74,12 @@ public class ActionService {
 	}
 
 	public boolean hasUnmergedEntries(int account, String statementGroup) {
-		return !jdbcClient.sql(HAS_UNMERGED)
+		Long num = (Long) jdbcClient.sql(HAS_UNMERGED)
 				.param(account)
 				.param(statementGroup)
 				.query()
-				.singleRow().isEmpty();
+				.singleRow()
+				.get("num");
+		return num != null && num > 0L;
 	}
 }
