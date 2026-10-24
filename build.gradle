@@ -57,7 +57,6 @@ dependencies {
 	compileOnly 'org.jetbrains:annotations:26.1.0'
 	annotationProcessor 'org.projectlombok:lombok:1.18.48'
 
-	testCompileOnly 'org.projectlombok:lombok:1.18.48'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
