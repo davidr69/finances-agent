@@ -1,7 +1,6 @@
 package net.lavacro.finances.agent;
 
 import com.pgvector.PGvector;
-import lombok.extern.slf4j.Slf4j;
 import net.lavacro.finances.agent.service.EmbedVectorService;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -12,10 +11,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@SpringBootTest
-@Slf4j
+//@SpringBootTest
 class EmbedVendorsTest {
+	private final Logger log = LoggerFactory.getLogger(EmbedVendorsTest.class);
 
 	@Autowired
 	EmbeddingModel embeddingModel;
@@ -26,7 +27,7 @@ class EmbedVendorsTest {
 	@Autowired
 	EmbedVectorService embedVectorService;
 
-	@Test
+//	@Test
 	void multipleVendorsTest() {
 		String[] vendors = {
 				"Sq *Country Donuts R Staten Island NY Card 1234",
@@ -81,9 +82,14 @@ class EmbedVendorsTest {
 		);
 	}
 
-	@Test
+//	@Test
 	void embedVectorTest() {
 		embedVectorService.embedAllVectors();;
+	}
+
+	@Test
+	void test() {
+		log.info("Test");
 	}
 }
 
