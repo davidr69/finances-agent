@@ -74,8 +74,3 @@ The reason for making the capacity 768 is due to the response of the embedding m
 % curl -s http://llm:11434/api/embeddings -d '{"model": "nomic-embed-text", "prompt": "test"}' | jq '.embedding | length'
 768
 ```
-
-### TODO:
-- persist proper account
-- how do I prevent duplicate records on re-run?
-- create deserialization beans for each Kafka consumer
