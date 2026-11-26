@@ -29,7 +29,7 @@ repositories {
 }
 
 ext {
-	set('springAiVersion', "2.0.0")
+	set('springAiVersion', "2.1.0")
 }
 
 dependencies {
