@@ -11,7 +11,12 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,9 +38,11 @@ public class KafkaConfig {
 	@Bean
 	public ConcurrentKafkaListenerContainerFactory<String, byte[]> kafkaListenerContainerFactory(
 			KafkaProperties kafkaProperties,
-			ConsumerFactory<String, byte[]> byteArrayConsumerFactory) {
+			ConsumerFactory<String, byte[]> byteArrayConsumerFactory,
+			DefaultErrorHandler errorHandler) {
 		var factory = new ConcurrentKafkaListenerContainerFactory<String, byte[]>();
 		factory.setConsumerFactory(byteArrayConsumerFactory);
+		factory.setCommonErrorHandler(errorHandler);
 		applyListenerSettings(kafkaProperties, factory);
 		return factory;
 	}
@@ -71,5 +78,17 @@ public class KafkaConfig {
 			factory.setBatchListener(true);
 		}
 		factory.getContainerProperties().setAckMode(listener.getAckMode());
+		factory.getContainerProperties().setPollTimeout(listener.getPollTimeout().toMillis());
+		factory.getContainerProperties().setIdleBetweenPolls(listener.getIdleBetweenPolls().toMillis());
+	}
+
+	@Bean
+	public DefaultErrorHandler errorHandler(KafkaTemplate<Object, Object> template) {
+		DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(template);
+
+		DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
+
+		handler.addNotRetryableExceptions(DeserializationException.class, IllegalArgumentException.class);
+		return handler;
 	}
 }
