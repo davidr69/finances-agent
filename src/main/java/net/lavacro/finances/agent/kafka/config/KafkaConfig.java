@@ -4,6 +4,7 @@ import net.lavacro.finances.shared.proto.DecisionProto;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.boot.kafka.autoconfigure.KafkaConfigBuilder;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,7 @@ import java.util.Map;
 public class KafkaConfig {
 	@Bean
 	public ConsumerFactory<String, byte[]> byteArrayConsumerFactory(KafkaProperties kafkaProperties) {
-		Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+		Map<String, Object> props = new HashMap<>(KafkaConfigBuilder.of(kafkaProperties).consumer().build());
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
 		props.put("spring.deserializer.key.delegate.class", StringDeserializer.class.getName());
@@ -49,7 +50,7 @@ public class KafkaConfig {
 
 	@Bean
 	public ConsumerFactory<String, DecisionProto.DecisionMessage> decisionConsumerFactory(KafkaProperties kafkaProperties) {
-		Map<String, Object> props = new HashMap<>(kafkaProperties.buildConsumerProperties());
+		Map<String, Object> props = new HashMap<>(KafkaConfigBuilder.of(kafkaProperties).consumer().build());
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
 		return new DefaultKafkaConsumerFactory<>(
