@@ -1,6 +1,8 @@
 package net.lavacro.finances.agent.kafka;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.lavacro.finances.agent.workflow.ChatBot;
 import net.lavacro.finances.shared.proto.DecisionProto;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -12,12 +14,10 @@ import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MyConsumer {
 	private final AsyncProcessor asyncProcessor;
-
-	public MyConsumer(AsyncProcessor asyncProcessor) {
-		this.asyncProcessor = asyncProcessor;
-	}
+	private final ChatBot chatBot;
 
 	@KafkaListener(topics = "finances-topic")
 	public void listen(ConsumerRecord<String, byte[]> message) {
@@ -50,9 +50,9 @@ public class MyConsumer {
 		}
 
 		try {
-			Integer accountNumber = Integer.parseInt(accountId);
-			Integer yearInt = Integer.parseInt(year);
-			asyncProcessor.process(filename, accountNumber, yearInt, payload);
+			int accountNumber = Integer.parseInt(accountId);
+			int yearInt = Integer.parseInt(year);
+			chatBot.workflow(payload, accountNumber, yearInt);
 		}  catch (NumberFormatException e) {
 			log.error("Invalid account id: {}", accountId);
 		}
