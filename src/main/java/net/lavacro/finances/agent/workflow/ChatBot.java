@@ -2,6 +2,8 @@ package net.lavacro.finances.agent.workflow;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import net.lavacro.finances.agent.dto.StmtTransaction;
@@ -21,6 +23,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.Loader;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
@@ -101,6 +104,14 @@ Your last message starts with [ and ends with ].
 If you write anything else first, you have failed this task.
 		""";
 
+
+	private static final RetryConfig config = RetryConfig.custom()
+			.maxAttempts(3)
+			.waitDuration(Duration.ofSeconds(2))
+			.retryExceptions(Exception.class)
+			.build();
+
+	private static final Retry retry = Retry.of("anthropicLlm", config);
 
 	// TODO: allow the LLM to be specified via Spring resolvers
 	public ChatBot(
@@ -198,13 +209,17 @@ If you write anything else first, you have failed this task.
 				continue;
 			}
 
+			final String fullPrompt = json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].";
+
 			log.info("Validating ...");
-			ChatResponse response = chatClient.prompt()
+			ChatResponse response = Retry.decorateSupplier(retry, () ->
+				chatClient.prompt()
 					.system(PROMPT)
-					.user(json + "\n\nREMINDER: Respond with ONLY the JSON array. No narration. Start with [ and end with ].")
+					.user(fullPrompt)
 					.tools(vendorTool)
 					.call()
-					.chatResponse();
+					.chatResponse()
+			).get();
 
 			if(response == null) {
 				log.error("No response from chat client");
